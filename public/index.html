@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
   <title>Tá Na Hand!</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -232,6 +233,11 @@
         const log = JSON.parse(e.data);
         const logDiv = document.getElementById('logs');
         logDiv.innerHTML += `<div>${log}</div>`;
+        if (log.toLowerCase().includes('erro interno')) {
+          const statusTitle = document.querySelector('#status-container h3');
+          if (statusTitle) statusTitle.innerText = "Erro no Servidor: Memória cheia ou Timeout!";
+          alert("Ops! O servidor travou: " + log);
+        }
       });
 
       evtSource.addEventListener('progress', (e) => {
@@ -291,7 +297,8 @@
       const heartColor = isFav ? "text-rose-500" : "text-white/70 hover:text-white";
       const heartFill = isFav ? "currentColor" : "none";
       
-      const capaImg = item.capa ? `<img src="${item.capa}" class="w-full aspect-square object-cover bg-slate-800 group-hover:scale-105 transition-transform duration-500" loading="lazy">` : `<div class="w-full aspect-square bg-slate-800 flex items-center justify-center text-slate-500 text-sm font-medium">Sem Imagem</div>`;
+      const proxyCapa = item.capa ? `/api/image?url=${encodeURIComponent(item.capa)}&ref=${encodeURIComponent(item.link)}` : '';
+      const capaImg = item.capa ? `<img src="${proxyCapa}" class="w-full aspect-square object-cover bg-slate-800 group-hover:scale-105 transition-transform duration-500" loading="lazy">` : `<div class="w-full aspect-square bg-slate-800 flex items-center justify-center text-slate-500 text-sm font-medium">Sem Imagem</div>`;
       
       return `
         <div class="bg-slate-800 rounded-2xl shadow-md hover:shadow-xl border border-slate-700 overflow-hidden flex flex-col group fade-in transition-all relative">
