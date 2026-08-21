@@ -176,15 +176,7 @@ class Scraper {
     
     const palavrasChave = [...palavrasChaveSet].map(p => p.toLowerCase());
     
-    const reqFeminino = palavrasChave.some(kw => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/.test(kw));
-    const reqInfantil = palavrasChave.some(kw => /kids|child|youth|童|infantil|menino|menina|boy|girl/.test(kw));
-    
     let palavrasProibidas = [...proibidasCustom];
-    if (!reqInfantil) palavrasProibidas.push('kids', 'child', 'youth', '童', 'infantil', 'menino', 'menina', 'boy', 'girl');
-    if (!reqFeminino) palavrasProibidas.push('women', 'woman', 'female', 'lady', 'ladies', '女', 'feminino', 'feminina', 'mulher');
-    if (!palavrasChave.some(kw => /camisa|shirt|jersey|kit|jacket|pants|suit|conjunto/.test(kw))) {
-      palavrasProibidas.push('pants', 'suit', 'jacket', 'conjunto', 'calça', 'calca');
-    }
     
     const categoriaEscolhida = (category === 'todas') ? 'todas' : category;
     let dominiosUsados = [];
