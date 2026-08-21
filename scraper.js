@@ -219,6 +219,11 @@ class Scraper {
       dominiosUsados = lojas[cat] || lojas.esportes;
     }
     
+    // Se for automobilismo, inclui as lojas de luxo porque F1/Marcas costumam estar lá também
+    if (category.includes('automobilismo')) {
+      dominiosUsados = [...new Set([...dominiosUsados, ...lojas.luxo, ...lojas.outros])];
+    }
+    
     // Embaralha para que luxo seja buscado em paralelo com esportes
     dominiosUsados = dominiosUsados.sort(() => Math.random() - 0.5);
 

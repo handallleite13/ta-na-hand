@@ -80,10 +80,10 @@
         </div>
         
         <div class="relative flex-1">
-          <input type="text" id="query" class="w-full h-14 pl-5 pr-4 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="Digite para buscar...">
+          <input type="text" id="query" class="w-full h-14 pl-5 pr-4 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="Digite e aperte Enter para buscar online...">
         </div>
         
-        <button id="btn-search" class="h-14 px-8 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+        <button id="btn-search" class="hidden h-14 px-8 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           <span>Buscar</span>
         </button>
@@ -588,16 +588,54 @@
         sub.classList.add('hidden');
       }
       
-      // Auto-pesquisa se estiver vazio (Mais Recentes)
       if (document.getElementById('query').value.trim() === '') {
-        document.getElementById('btn-search').click();
+        fetchLatestAndRender();
       }
     });
 
     document.getElementById('sub-category').addEventListener('change', () => {
       if (document.getElementById('query').value.trim() === '') {
-        document.getElementById('btn-search').click();
+        fetchLatestAndRender();
       }
+    });
+
+    async function fetchLatestAndRender() {
+      showingFavorites = false;
+      showingCart = false;
+      cartContainer.classList.add('hidden');
+      
+      let category = document.getElementById('category').value;
+      if (category === 'esportes') {
+        const sub = document.getElementById('sub-category').value;
+        if (sub && sub !== 'geral') {
+          category = 'esportes_' + sub;
+        }
+      }
+
+      container.classList.remove('hidden');
+      document.getElementById('results-title').innerText = "Últimos Lançamentos";
+      document.getElementById('search-spinner').classList.remove('hidden');
+      document.getElementById('bottom-status').classList.add('hidden'); // Esconde o contador
+      
+      try {
+        const res = await fetch(`/api/latest?c=${encodeURIComponent(category)}`);
+        const data = await res.json();
+        
+        document.getElementById('search-spinner').classList.add('hidden');
+        if (data && data.length > 0) {
+          allResults = data;
+          applyFiltersAndRender(allResults);
+        } else {
+          document.getElementById('results-list').innerHTML = ''; // Não avisa nada, apenas fica vazio enquanto carrega no back
+        }
+      } catch (e) {
+        document.getElementById('search-spinner').classList.add('hidden');
+      }
+    }
+    
+    // Auto-carrega ao abrir o site
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchLatestAndRender();
     });
 
     // Busca Real (SSE)
