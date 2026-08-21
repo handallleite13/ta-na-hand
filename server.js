@@ -28,6 +28,69 @@ try {
   console.log('Erro ao ler cache', e);
 }
 
+function traduzirTitulo(tituloOriginal) {
+  if (!tituloOriginal) return "";
+  let t = tituloOriginal;
+  
+  // Limpar emojis e caracteres inúteis comuns
+  t = t.replace(/[🔥✨⭐🏆❤⚽🏅✅💥]/g, '');
+  
+  // Dicionário focado no vocabulário de Futebol e Esportes para garantir coerência
+  const dict = {
+    '主场': 'Titular',
+    '客场': 'Reserva',
+    '二客': 'Alternativa',
+    '三客': 'Alternativa',
+    '球衣': 'Camisa',
+    '男': 'Masculina',
+    '女': 'Feminina',
+    '儿童': 'Infantil',
+    '童装': 'Infantil',
+    '童': 'Infantil',
+    '泰版': 'Tailandesa',
+    '球迷': 'Torcedor',
+    '球员': 'Jogador',
+    '套装': 'Conjunto',
+    '短袖': 'Manga Curta',
+    '长袖': 'Manga Longa',
+    '外套': 'Jaqueta',
+    '风衣': 'Corta Vento',
+    '训练': 'Treino',
+    '足球鞋': 'Chuteira',
+    '袜子': 'Meião',
+    '特别版': 'Edição Especial',
+    '纪念版': 'Edição Comemorativa',
+    '门将': 'Goleiro',
+    '长裤': 'Calça',
+    '短裤': 'Shorts',
+    '裤': 'Shorts',
+    '出场服': 'Pré-Jogo',
+    '赛前': 'Pré-Jogo',
+    '无标': 'Sem Patrocínio',
+    '带标': 'Com Patrocínio',
+    '连帽': 'Com Capuz',
+    '无帽': 'Sem Capuz',
+    '紧身': 'Térmica',
+    '背心': 'Regata',
+    '光板': 'Lisa',
+    '定制': 'Personalizada',
+    '复古': 'Retrô'
+  };
+
+  for (let [ch, pt] of Object.entries(dict)) {
+    t = t.split(ch).join(' ' + pt + ' ');
+  }
+
+  // Remove qualquer caractere chinês restante (ideogramas) para evitar lixo não traduzido
+  t = t.replace(/[\u4e00-\u9fa5]/g, '');
+
+  // Ajusta pontuações soltas e espaços múltiplos
+  t = t.replace(/\s+/g, ' ').trim();
+  t = t.replace(/^[-\/\\_]+/, '').trim(); // Remove traços no início
+  
+  return t;
+}
+
 // Endpoint de Autocomplete Rápido
 app.get('/api/autocomplete', (req, res) => {
   const query = req.query.q || '';
@@ -39,10 +102,10 @@ app.get('/api/autocomplete', (req, res) => {
     item.original.toLowerCase().includes(termo)
   ).slice(0, 50); // Retorna no máximo 50 para ser instantâneo
   
-  res.json(resultados);
-});
+  res.json(resultados.map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
+  });
 
-app.get('/api/latest', (req, res) => {
+  app.get('/api/latest', (req, res) => {
   const c = req.query.c || 'todas';
   
   let database = [];
@@ -85,7 +148,7 @@ app.get('/api/latest', (req, res) => {
   }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
-  res.json(resultados.slice(-50).reverse());
+  res.json(resultados.slice(-50).reverse().map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
 });
 
 app.get('/api/search', (req, res) => {
@@ -140,10 +203,10 @@ app.get('/api/search', (req, res) => {
     });
   }
   
-  res.json(resultados);
-});
+  res.json(resultados.map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
+  });
 
-app.get('/api/image', (req, res) => {
+  app.get('/api/image', (req, res) => {
   const imageUrl = req.query.url;
   const referer = req.query.ref || 'https://x.yupoo.com/';
   if (!imageUrl) return res.status(400).send('URL required');
