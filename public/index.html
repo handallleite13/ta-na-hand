@@ -639,7 +639,7 @@
     });
 
     // Busca Real (SSE)
-    document.getElementById('btn-search').addEventListener('click', () => {
+    document.getElementById('btn-search').addEventListener('click', async () => {
       showingFavorites = false;
       showingCart = false;
       cartContainer.classList.add('hidden');
@@ -647,7 +647,6 @@
       const query = document.getElementById('query').value.trim();
       let category = document.getElementById('category').value;
       
-      // Mapeamento de subcategoria
       if (category === 'esportes') {
         const sub = document.getElementById('sub-category').value;
         if (sub && sub !== 'geral') {
@@ -662,59 +661,34 @@
       document.getElementById('results-list').innerHTML = '';
       container.classList.remove('hidden');
 
-      document.getElementById('btn-search').classList.add('hidden');
-      document.getElementById('btn-stop').classList.remove('hidden');
-
       allResults = [];
-      if (evtSource) evtSource.close();
 
-      evtSource = new EventSource(`/api/search?q=${encodeURIComponent(query)}&c=${encodeURIComponent(category)}`);
-
-      evtSource.addEventListener('progress', (e) => {
-        const p = JSON.parse(e.data);
-        document.getElementById('stat-encontrados').innerText = p.encontrados;
-      });
-
-      evtSource.addEventListener('album_found', (e) => {
-        const item = JSON.parse(e.data);
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&c=${encodeURIComponent(category)}`);
+        const data = await res.json();
         
-        const match = item.link.match(/\/albums\/(\d+)/);
-        item.id = match ? parseInt(match[1], 10) : 0;
+        allResults = data;
+        document.getElementById('stat-encontrados').innerText = allResults.length;
         
-        const isDuplicate = item.id !== 0 
-          ? allResults.find(a => a.id === item.id) 
-          : allResults.find(a => a.link === item.link);
-
-        if (!isDuplicate) {
-          allResults.push(item);
-          allResults.sort((a, b) => b.id - a.id);
+        if (allResults.length > 0) {
           applyFiltersAndRender(allResults);
+        } else {
+          document.getElementById('results-list').innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-lg">Nenhum resultado encontrado no catálogo local.</div>';
         }
-      });
-
-      evtSource.addEventListener('done', (e) => {
-        finishSearch();
-        if (allResults.length === 0) {
-           renderAll([]);
-        }
-      });
-
-      evtSource.addEventListener('finished', () => {
-        finishSearch();
-      });
+      } catch (e) {
+        console.error(e);
+      } finally {
+        document.getElementById('search-spinner').classList.add('hidden');
+      }
     });
 
+    // Remove btn-stop as it's no longer needed for instant searches
+    // We can just leave the empty function to avoid breaking HTML
     document.getElementById('btn-stop').addEventListener('click', () => {
-      finishSearch();
+      // Do nothing
     });
 
     function finishSearch() {
-      if (evtSource) {
-        evtSource.close();
-        evtSource = null;
-      }
-      document.getElementById('btn-search').classList.remove('hidden');
-      document.getElementById('btn-stop').classList.add('hidden');
       document.getElementById('search-spinner').classList.add('hidden');
     }
   </script>

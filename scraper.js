@@ -424,4 +424,4 @@ class Scraper {
   }
 }
 
-module.exports = Scraper;
+module.exports = { Scraper, lojas };
