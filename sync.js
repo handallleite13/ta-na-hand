@@ -13,7 +13,6 @@ let catalogo = [];
 if (fsSync.existsSync(DB_FILE)) {
   try {
     catalogo = JSON.parse(fsSync.readFileSync(DB_FILE, 'utf8'));
-    console.log('[+] Catálogo carregado com ' + catalogo.length + ' itens.');
   } catch (e) {}
 }
 
@@ -40,35 +39,35 @@ const extractDomains = (group) => {
 extractDomains(lojas);
 const dominiosAtivos = Array.from(allDomains);
 
-// Variáveis para ETA Global
+// Variáveis para ETA Global baseada em Domínios
 let stats = {
-  dominiosLidos: 0,
-  paginasTotais: 0, // Será descoberto dinamicamente
-  paginasConcluidas: 0,
+  dominiosConcluidos: 0,
+  dominiosTotais: dominiosAtivos.length,
   inicio: Date.now(),
-  novosItensNaSessao: 0
+  novosItensNaSessao: 0,
+  paginasLidasHoje: 0
 };
 
 function printETA() {
   const agora = Date.now();
   const decorridoMs = agora - stats.inicio;
-  const taxaPaginasPorMs = stats.paginasConcluidas / decorridoMs;
   
-  if (stats.paginasConcluidas === 0 || stats.paginasTotais === 0) return;
+  if (stats.dominiosConcluidos === 0) return;
   
-  const paginasRestantes = stats.paginasTotais - stats.paginasConcluidas;
-  const tempoRestanteMs = paginasRestantes / taxaPaginasPorMs;
+  const tempoPorDominioMs = decorridoMs / stats.dominiosConcluidos;
+  const dominiosRestantes = stats.dominiosTotais - stats.dominiosConcluidos;
+  const tempoRestanteMs = dominiosRestantes * tempoPorDominioMs;
   
   const minutos = Math.floor(tempoRestanteMs / 60000);
   const segundos = Math.floor((tempoRestanteMs % 60000) / 1000);
-  const decorridoMin = Math.floor(decorridoMs / 60000);
   
-  const porcentagem = ((stats.paginasConcluidas / stats.paginasTotais) * 100).toFixed(1);
+  const porcentagem = ((stats.dominiosConcluidos / stats.dominiosTotais) * 100).toFixed(1);
   
   console.log(`\n======================================================`);
-  console.log(`⏱️  PROGRESSO GLOBAL: ${porcentagem}% (${stats.paginasConcluidas}/${stats.paginasTotais} Páginas)`);
+  console.log(`📈 PROGRESSO: ${porcentagem}% (${stats.dominiosConcluidos}/${stats.dominiosTotais} Lojas Concluídas)`);
   console.log(`⏱️  TEMPO ESTIMADO RESTANTE: ~${minutos}m ${segundos}s`);
-  console.log(`⏱️  ITENS ADICIONADOS HOJE: ${stats.novosItensNaSessao}`);
+  console.log(`👕 ITENS NOVOS SALVOS HOJE: ${stats.novosItensNaSessao}`);
+  console.log(`📖 PÁGINAS LIDAS ATÉ AGORA: ${stats.paginasLidasHoje}`);
   console.log(`======================================================\n`);
 }
 
@@ -84,30 +83,14 @@ async function syncDomain(browser, dominio) {
     }
   });
 
-  // 1. Descobrir total de páginas
-  let maxPages = 1;
-  try {
-    await page.goto(dominio + '/albums?page=1', { waitUntil: 'domcontentloaded', timeout: 25000 });
-    const discoveredPages = await page.evaluate(() => {
-      const input = document.querySelector('input[name="page"]');
-      return input ? parseInt(input.getAttribute('max'), 10) : 1;
-    });
-    maxPages = discoveredPages > 0 ? discoveredPages : 1;
-  } catch (e) {
-    maxPages = 50; // Fallback se der erro na página 1
-  }
-
-  stats.paginasTotais += maxPages; // Adiciona ao escopo global
-  console.log(`[🔎 INFO] ${dominio.split('//')[1]} tem ${maxPages} páginas no total.`);
-
-  // 2. Varrer todas as páginas descobertas
-  for (let p = 1; p <= maxPages; p++) {
+  let p = 1;
+  const limit = 5000;
+  
+  while (p <= limit) {
     const url = dominio + '/albums?page=' + p;
-    console.log(`[🚀 ${dominio.split('//')[1]}] Varrendo página ${p}/${maxPages}...`);
+    console.log(`[🚀 ${dominio.split('//')[1]}] Lendo página ${p}...`);
     try {
-      if (p > 1) {
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
-      }
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
       
       const albuns = await page.evaluate((domain) => {
         const divs = document.querySelectorAll('.album__main');
@@ -135,7 +118,8 @@ async function syncDomain(browser, dominio) {
       }, dominio);
 
       if (!albuns || albuns.length === 0) {
-        break; // Página vazia
+        console.log(`[✅ FIM] A loja ${dominio.split('//')[1]} não tem mais itens (Parou na ${p})`);
+        break; 
       }
       
       let novos = 0;
@@ -148,26 +132,22 @@ async function syncDomain(browser, dominio) {
       }
       
       if (novos > 0) saveDB(); 
+      stats.paginasLidasHoje++;
+      p++;
       
     } catch (e) {
-      console.log(`[⚠️ RETRY] Lentidão em ${dominio} pág ${p}. Indo para próxima...`);
-    }
-    
-    // Atualiza estatísticas globais ao terminar a página
-    stats.paginasConcluidas++;
-    
-    // Imprime ETA a cada 10 páginas globais processadas (para não floodar o console)
-    if (stats.paginasConcluidas % 10 === 0) {
-      printETA();
+      console.log(`[⚠️ RETRY] Lentidão em ${dominio} pág ${p}. Tentando próxima...`);
+      p++;
     }
   }
   
   await page.close();
-  stats.dominiosLidos++;
+  stats.dominiosConcluidos++;
+  printETA();
 }
 
 async function runSync() {
-  console.log(`🔥 INICIANDO VARREDURA INTELIGENTE EM ${dominiosAtivos.length} DOMÍNIOS SIMULTANEAMENTE 🔥`);
+  console.log(`🔥 INICIANDO VARREDURA INTELIGENTE EM ${dominiosAtivos.length} LOJAS 🔥`);
   stats.inicio = Date.now();
   
   const browser = await puppeteer.launch({
@@ -179,14 +159,14 @@ async function runSync() {
     ]
   });
 
-  const chunk = dominiosAtivos.slice(0, CONCURRENCY);
-  const promises = chunk.map(dominio => syncDomain(browser, dominio));
-  
-  await Promise.all(promises);
+  for (let i = 0; i < dominiosAtivos.length; i += CONCURRENCY) {
+    const chunk = dominiosAtivos.slice(i, i + CONCURRENCY);
+    const promises = chunk.map(dominio => syncDomain(browser, dominio));
+    await Promise.all(promises);
+  }
 
   await saveDB(); 
   await browser.close();
-  printETA(); // Imprime o final
   console.log('✅ VARREDURA EXTREMA CONCLUÍDA COM SUCESSO!');
 }
 
