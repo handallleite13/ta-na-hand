@@ -7,7 +7,7 @@ const path = require('path');
 const { lojas } = require('./scraper');
 
 const DB_FILE = path.join(__dirname, 'catalogo.json');
-const CONCURRENCY = 37;
+const CONCURRENCY = 4;
 
 let catalogo = [];
 if (fsSync.existsSync(DB_FILE)) {
@@ -77,7 +77,7 @@ async function syncDomain(browser, dominio) {
   
   await page.setRequestInterception(true);
   page.on('request', (req) => {
-    if (['image', 'stylesheet', 'font', 'media', 'other'].includes(req.resourceType())) {
+    if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
       req.abort();
     } else {
       req.continue();
@@ -175,9 +175,7 @@ async function runSync() {
     args: [
       '--no-sandbox', 
       '--disable-setuid-sandbox', 
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--disable-gpu'
+      '--disable-dev-shm-usage'
     ]
   });
 
