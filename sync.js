@@ -6,22 +6,41 @@ const fs = require('fs').promises;
 const path = require('path');
 const { lojas } = require('./scraper');
 
-const DB_FILE = path.join(__dirname, 'catalogo.json');
+
+const DB_FILE = path.join(__dirname, 'catalogo.json'); // Legado
 const CONCURRENCY = 4;
 
 let catalogo = [];
-if (fsSync.existsSync(DB_FILE)) {
-  try {
-    catalogo = JSON.parse(fsSync.readFileSync(DB_FILE, 'utf8'));
-  } catch (e) {}
-}
+try {
+  const fsReq = require('fs');
+  const pathReq = require('path');
+  const files = fsReq.readdirSync(__dirname);
+  const catFiles = files.filter(f => f.startsWith('catalogo') && f.endsWith('.json'));
+  for (let f of catFiles) {
+    const filePath = pathReq.join(__dirname, f);
+    const data = JSON.parse(fsReq.readFileSync(filePath, 'utf8'));
+    catalogo = catalogo.concat(data);
+    
+    // Apaga o arquivo antigo gigantão para n upar pro github
+    if (f === 'catalogo.json') {
+      try { fsReq.unlinkSync(filePath); } catch(e){}
+    }
+  }
+} catch (e) {}
 
 let isSaving = false;
 async function saveDB() {
   if (isSaving) return;
   isSaving = true;
   try {
-    await fs.writeFile(DB_FILE, JSON.stringify(catalogo));
+    const CHUNK_SIZE = 50000; // ~7MB por arquivo
+    let chunkCount = 1;
+    for (let i = 0; i < catalogo.length; i += CHUNK_SIZE) {
+      const chunk = catalogo.slice(i, i + CHUNK_SIZE);
+      const filename = path.join(__dirname, `catalogo_${chunkCount}.json`);
+      await fs.writeFile(filename, JSON.stringify(chunk));
+      chunkCount++;
+    }
   } catch(e) {}
   isSaving = false;
 }

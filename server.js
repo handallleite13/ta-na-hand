@@ -107,12 +107,18 @@ app.get('/api/autocomplete', (req, res) => {
 
   app.get('/api/latest', (req, res) => {
   const c = req.query.c || 'todas';
-  
-  let database = [];
-  const DB_FILE = path.join(__dirname, 'catalogo.json');
-  if (fs.existsSync(DB_FILE)) {
-    try { database = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch(e){}
-  }
+    let database = [];
+    try {
+      const fsReq = require('fs');
+      const pathReq = require('path');
+      const files = fsReq.readdirSync(__dirname);
+      const catFiles = files.filter(f => f.startsWith('catalogo') && f.endsWith('.json'));
+      for (let f of catFiles) {
+        const filePath = pathReq.join(__dirname, f);
+        const data = JSON.parse(fsReq.readFileSync(filePath, 'utf8'));
+        database = database.concat(data);
+      }
+    } catch(e) {}
   
   // Se não houver banco, tenta usar o globalCache legado
   if (database.length === 0 && globalCache.length > 0) {
@@ -151,59 +157,96 @@ app.get('/api/autocomplete', (req, res) => {
   res.json(resultados.slice(-50).reverse().map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
 });
 
-app.get('/api/search', (req, res) => {
-  const query = (req.query.q || '').trim().toLowerCase();
-  const c = req.query.c || 'todas';
-  
-  let database = [];
-  const DB_FILE = path.join(__dirname, 'catalogo.json');
-  if (fs.existsSync(DB_FILE)) {
-    try { database = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch(e){}
-  }
-
-  let resultados = database;
-  
-  // Filtrar por Categoria
-  if (c !== 'todas') {
-    const isEsportes = c.startsWith('esportes');
-    const sub = c.includes('_') ? c.split('_')[1] : '';
+  app.get('/api/search', async (req, res) => {
+    const query = (req.query.q || '').trim().toLowerCase();
+    const c = req.query.c || 'todas';
     
-    // Obter domínios válidos para esta categoria
-    const { lojas } = require('./scraper');
-    const flattenGroup = (group) => {
-      let arr = [];
-      for (let key in group) {
-        if (Array.isArray(group[key])) arr.push(...group[key]);
+    let database = [];
+    try {
+      const fsReq = require('fs');
+      const pathReq = require('path');
+      const files = fsReq.readdirSync(__dirname);
+      const catFiles = files.filter(f => f.startsWith('catalogo') && f.endsWith('.json'));
+      for (let f of catFiles) {
+        const filePath = pathReq.join(__dirname, f);
+        const data = JSON.parse(fsReq.readFileSync(filePath, 'utf8'));
+        database = database.concat(data);
       }
-      return arr;
-    };
+    } catch(e) {}
+  
+    let resultados = database;
     
-    let dominiosValidos = [];
-    if (c === 'esportes') {
-      dominiosValidos = flattenGroup(lojas.esportes);
-    } else if (isEsportes && lojas.esportes[sub]) {
-      dominiosValidos = lojas.esportes[sub];
-    } else if (lojas[c]) {
-      dominiosValidos = flattenGroup(lojas[c]);
+    // Filtrar por Categoria
+    if (c !== 'todas') {
+      const isEsportes = c.startsWith('esportes');
+      const sub = c.includes('_') ? c.split('_')[1] : '';
+      
+      // Obter domínios válidos para esta categoria
+      const { lojas } = require('./scraper');
+      const flattenGroup = (group) => {
+        let arr = [];
+        for (let key in group) {
+          if (Array.isArray(group[key])) {
+            arr = arr.concat(group[key]);
+          } else if (typeof group[key] === 'object') {
+            arr = arr.concat(flattenGroup(group[key]));
+          }
+        }
+        return arr;
+      };
+      
+      let dominiosValidos = [];
+      if (isEsportes) {
+        if (sub && lojas.esportes[sub]) {
+          dominiosValidos = flattenGroup({ a: lojas.esportes[sub] });
+        } else {
+          dominiosValidos = flattenGroup(lojas.esportes);
+        }
+      } else {
+        if (sub && lojas.marcas[sub]) {
+          dominiosValidos = flattenGroup({ a: lojas.marcas[sub] });
+        } else {
+          dominiosValidos = flattenGroup(lojas.marcas);
+        }
+      }
+      
+      dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
+      resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
     }
     
-    // Clean trailing slashes
-    dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
+    // Filtro de Busca Multilingue Inteligente
+    if (query) {
+      const keywords = query.split(' ').filter(k => k.length > 1);
+      
+      let translatedKeywords = [];
+      try {
+        const translate = require('google-translate-api-x');
+        for (let kw of keywords) {
+          let kwVariants = [kw];
+          try {
+            const resZh = await translate(kw, {to: 'zh-CN'});
+            if (resZh && resZh.text) kwVariants.push(resZh.text.toLowerCase());
+          } catch(e) {}
+          try {
+            const resRu = await translate(kw, {to: 'ru'});
+            if (resRu && resRu.text) kwVariants.push(resRu.text.toLowerCase());
+          } catch(e) {}
+          translatedKeywords.push(kwVariants);
+        }
+      } catch(e) {
+        translatedKeywords = keywords.map(kw => [kw]);
+      }
+
+      resultados = resultados.filter(item => {
+        const titulo = (item.titulo || '').toLowerCase();
+        
+        return translatedKeywords.every(variants => {
+          return variants.some(v => titulo.includes(v));
+        });
+      });
+    }
     
-    resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
-  }
-  
-  // Filtrar pela Query
-  if (query) {
-    const keywords = query.split(' ').filter(Boolean);
-    resultados = resultados.filter(item => {
-      const titulo = item.titulo.toLowerCase();
-      // Deve conter TODAS as palavras buscadas
-      return keywords.every(kw => titulo.includes(kw));
-    });
-  }
-  
-  res.json(resultados.map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
+    res.json(resultados.map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
   });
 
   app.get('/api/image', (req, res) => {
