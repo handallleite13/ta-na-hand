@@ -87,7 +87,7 @@ async function syncDomain(browser, dominio) {
   const limit = 5000;
   
   while (p <= limit) {
-    const url = dominio + '/albums?page=' + p;
+    const url = dominio + '/categories?page=' + p;
     console.log(`[🚀 ${dominio.split('//')[1]}] Lendo página ${p}...`);
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
