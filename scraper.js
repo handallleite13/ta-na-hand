@@ -101,7 +101,33 @@ class Scraper {
   }
 
   async run(query, category) {
-    let respostaLimpa = query.trim().toLowerCase();
+    let respostaLimpa = (query || '').trim().toLowerCase();
+    
+    let isLatest = false;
+    let subCategoriaQuery = "";
+    
+    let categoriaEscolhida = category;
+    if (category.startsWith('esportes_')) {
+        categoriaEscolhida = 'esportes';
+        const sub = category.split('_')[1];
+        if (sub === 'basquete') subCategoriaQuery = "nba basketball basquete lakers bulls celtics warriors heat";
+        else if (sub === 'automobilismo') subCategoriaQuery = "f1 racing formula ferrari mercedes red bull mclaren porsche bmw aston";
+        else if (sub === 'futebol_americano') subCategoriaQuery = "nfl american football chiefs eagles patriots";
+        else if (sub === 'rugby') subCategoriaQuery = "rugby";
+        else if (sub === 'beisebol') subCategoriaQuery = "mlb baseball yankees dodgers red sox";
+        else if (sub === 'futebol') subCategoriaQuery = "camisa shirt jersey kit soccer football fc united city real barca milan";
+    }
+
+    if (!respostaLimpa) {
+        if (subCategoriaQuery) {
+            respostaLimpa = subCategoriaQuery;
+        } else {
+            isLatest = true;
+        }
+    }
+
+    if (!isLatest && !respostaLimpa) return;
+
     let limiteRecentes = 0;
     const matchUltima = respostaLimpa.match(/^(últimas|ultimas|última|ultima)\s*(\d+)?\s*(.*)/);
     if (matchUltima) {
@@ -110,11 +136,12 @@ class Scraper {
       const resto = matchUltima[3];
       limiteRecentes = numero ? parseInt(numero, 10) : (palavra.endsWith('s') ? 5 : 1);
       respostaLimpa = resto.trim();
-      if (!respostaLimpa) respostaLimpa = "camisa";
+      if (!respostaLimpa) {
+          if (subCategoriaQuery) respostaLimpa = subCategoriaQuery;
+          else isLatest = true;
+      }
     }
-
-    if (!respostaLimpa) return;
-
+    
     const dicionarioFutebol = {
       'santos': { proibidas: ['laguna', 'diguna', '拉古纳', '帝古纳'] },
       'real': { proibidas: ['sociedad', 'betis', '皇家社会', '皇家贝蒂斯'] },
@@ -124,75 +151,85 @@ class Scraper {
       'flamengo': { proibidas: [] }
     };
 
-    const partes = respostaLimpa.split(/\s+/);
-    let queryPositiva = [];
-    let proibidasCustom = [];
-    partes.forEach(p => {
-      if (p.startsWith('-')) proibidasCustom.push(p.substring(1).toLowerCase());
-      else queryPositiva.push(p);
-    });
-    respostaLimpa = queryPositiva.join(' ');
+    let palavrasChave = [];
+    let palavrasProibidas = [];
 
-    if (!respostaLimpa) return;
-    
-    const palavrasBusca = respostaLimpa.split(' ');
-    for (const pb of palavrasBusca) {
-      if (dicionarioFutebol[pb]) {
-        const proibs = dicionarioFutebol[pb].proibidas.filter(p => !respostaLimpa.includes(p));
-        proibidasCustom.push(...proibs);
+    if (!isLatest) {
+      const partes = respostaLimpa.split(/\s+/);
+      let queryPositiva = [];
+      let proibidasCustom = [];
+      partes.forEach(p => {
+        if (p.startsWith('-')) proibidasCustom.push(p.substring(1).toLowerCase());
+        else queryPositiva.push(p);
+      });
+      respostaLimpa = queryPositiva.join(' ');
+
+      if (!respostaLimpa) return;
+      
+      const palavrasBusca = respostaLimpa.split(' ');
+      for (const pb of palavrasBusca) {
+        if (dicionarioFutebol[pb]) {
+          const proibs = dicionarioFutebol[pb].proibidas.filter(p => !respostaLimpa.includes(p));
+          proibidasCustom.push(...proibs);
+        }
       }
-    }
 
-    this.emit('search_info', { limit: limiteRecentes });
+      this.emit('search_info', { limit: limiteRecentes });
 
-    const termosPt = respostaLimpa.split(',').map(t => t.trim()).filter(Boolean);
-    let termosBase = [];
-    
-    for (const termo of termosPt) {
-      termosBase.push(termo);
-      this.emit('log', `⏳ Buscando termos relacionados para "${termo}"...`);
-      const termoExpandido = await expandirTermoWiki(termo);
-      if (termoExpandido && termoExpandido !== termo) {
-         termosBase.push(termoExpandido);
-         this.emit('log', `💡 Termo correlacionado encontrado: "${termoExpandido}"`);
+      const termosPt = respostaLimpa.split(',').map(t => t.trim()).filter(Boolean);
+      let termosBase = [];
+      
+      for (const termo of termosPt) {
+        termosBase.push(termo);
+        this.emit('log', `⏳ Buscando termos relacionados para "${termo}"...`);
+        const termoExpandido = await expandirTermoWiki(termo);
+        if (termoExpandido && termoExpandido !== termo) {
+           termosBase.push(termoExpandido);
+           this.emit('log', `💡 Termo correlacionado encontrado: "${termoExpandido}"`);
+        }
       }
-    }
 
-    this.emit('log', `⏳ Traduzindo termos...`);
-    let palavrasChaveSet = new Set();
-    
-    const toTitleCase = (str) => str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-    
-    for (const t of termosBase) {
-      const termoProprio = toTitleCase(t);
-      palavrasChaveSet.add(t);
-      const en = await traduzir(termoProprio, 'en'); if (en) palavrasChaveSet.add(en);
-      const ru = await traduzir(termoProprio, 'ru'); if (ru) palavrasChaveSet.add(ru);
-      const zh = await traduzir(termoProprio, 'zh-CN'); if (zh) palavrasChaveSet.add(zh);
-    }
+      this.emit('log', `⏳ Traduzindo termos...`);
+      let palavrasChaveSet = new Set();
+      
+      const toTitleCase = (str) => str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      
+      for (const t of termosBase) {
+        const termoProprio = toTitleCase(t);
+        palavrasChaveSet.add(t);
+        const en = await traduzir(termoProprio, 'en'); if (en) palavrasChaveSet.add(en);
+        const ru = await traduzir(termoProprio, 'ru'); if (ru) palavrasChaveSet.add(ru);
+        const zh = await traduzir(termoProprio, 'zh-CN'); if (zh) palavrasChaveSet.add(zh);
+      }
 
-    const palavrasChaveExibicao = [...palavrasChaveSet].filter(Boolean);
-    this.emit('log', `✅ Buscando por: [ ${palavrasChaveExibicao.join(' | ')} ]`);
+      const palavrasChaveExibicao = [...palavrasChaveSet].filter(Boolean);
+      this.emit('log', `✅ Buscando por: [ ${palavrasChaveExibicao.join(' | ')} ]`);
+
+      palavrasChave = [...palavrasChaveSet].map(p => p.toLowerCase());
+      palavrasProibidas = [...proibidasCustom];
+    } else {
+      this.emit('log', `🌟 Coletando últimos lançamentos da categoria...`);
+    }
     
-    const palavrasChave = [...palavrasChaveSet].map(p => p.toLowerCase());
-    
-    let palavrasProibidas = [...proibidasCustom];
-    
-    const categoriaEscolhida = (category === 'todas') ? 'todas' : category;
     let dominiosUsados = [];
-    if (categoriaEscolhida === 'todas') {
+    const cat = (categoriaEscolhida === 'todas') ? 'todas' : categoriaEscolhida;
+    if (cat === 'todas') {
       dominiosUsados = [...lojas.esportes, ...lojas.luxo, ...lojas.outros];
     } else {
-      dominiosUsados = lojas[categoriaEscolhida] || lojas.esportes;
+      dominiosUsados = lojas[cat] || lojas.esportes;
     }
     
     // Embaralha para que luxo seja buscado em paralelo com esportes
     dominiosUsados = dominiosUsados.sort(() => Math.random() - 0.5);
 
     dominiosUsados.forEach(dominio => {
-      palavrasChave.forEach(kw => {
-        this.filaDeTarefas.push({ urlBase: dominio.replace(/\/$/, ''), keyword: kw, pagina: 1 });
-      });
+      if (isLatest) {
+        this.filaDeTarefas.push({ urlBase: dominio.replace(/\/$/, ''), keyword: '', pagina: 1 });
+      } else {
+        palavrasChave.forEach(kw => {
+          this.filaDeTarefas.push({ urlBase: dominio.replace(/\/$/, ''), keyword: kw, pagina: 1 });
+        });
+      }
     });
 
     const totalLojas = dominiosUsados.length;
@@ -276,7 +313,10 @@ class Scraper {
       if (!tarefa) continue;
       
       this.tarefasAtivas++;
-      const urlBusca = `${tarefa.urlBase}/search/album?uid=1&q=${encodeURIComponent(tarefa.keyword)}&page=${tarefa.pagina}`;
+      const isFetchingLatest = (tarefa.keyword === '');
+      const urlBusca = isFetchingLatest
+        ? `${tarefa.urlBase}/albums?page=${tarefa.pagina}`
+        : `${tarefa.urlBase}/search/album?uid=1&q=${encodeURIComponent(tarefa.keyword)}&page=${tarefa.pagina}`;
 
       try {
         await page.goto(urlBusca, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -298,8 +338,12 @@ class Scraper {
         });
 
         if (dadosPagina.length > 0) {
-          this.filaDeTarefas.push({ urlBase: tarefa.urlBase, keyword: tarefa.keyword, pagina: tarefa.pagina + 1 });
-          const matches = dadosPagina.filter(album => {
+          // If fetching latest, we don't need to paginate to infinity. 1 page per store is enough for "recent".
+          if (!isFetchingLatest) {
+            this.filaDeTarefas.push({ urlBase: tarefa.urlBase, keyword: tarefa.keyword, pagina: tarefa.pagina + 1 });
+          }
+          
+          const matches = isFetchingLatest ? dadosPagina : dadosPagina.filter(album => {
             const temKeyword = palavrasChave.some(kw => album.titulo.includes(kw));
             if (!temKeyword) return false;
             const temProibida = palavrasProibidas.some(kw => album.titulo.includes(kw));

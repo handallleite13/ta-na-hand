@@ -47,16 +47,35 @@
       </a>
 
       <!-- Search Component -->
-      <div id="search-bar-container" class="w-full max-w-3xl flex flex-col sm:flex-row gap-2">
-        <div class="relative flex-shrink-0 sm:w-48">
-          <select id="category" class="w-full h-14 pl-4 pr-10 bg-slate-700 border border-slate-600 text-white font-medium rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
-            <option value="esportes">⚽ Esportes</option>
-            <option value="luxo">💎 Grifes & Luxo</option>
-            <option value="outros">📦 Outros</option>
-            <option value="todas">🌍 Todas as Lojas</option>
-          </select>
-          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+      <div id="search-bar-container" class="w-full max-w-4xl flex flex-col sm:flex-row gap-2">
+        
+        <!-- Category Group (60% larger -> w-80 instead of w-48) -->
+        <div id="categories-container" class="relative flex-shrink-0 sm:w-80 flex gap-2 transition-all">
+          <div class="relative flex-1">
+            <select id="category" class="w-full h-14 pl-4 pr-10 bg-slate-700 border border-slate-600 text-white font-medium rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+              <option value="todas" selected>🌍 Todas as Lojas</option>
+              <option value="esportes">⚽ Esportes</option>
+              <option value="luxo">💎 Grifes & Luxo</option>
+              <option value="outros">📦 Outros</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+          
+          <div id="sub-category-wrapper" class="relative flex-1 hidden">
+            <select id="sub-category" class="w-full h-14 pl-4 pr-10 bg-slate-700 border border-slate-600 text-white font-medium rounded-xl appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
+              <option value="geral">Geral</option>
+              <option value="automobilismo">Automobilismo</option>
+              <option value="basquete">Basquete</option>
+              <option value="beisebol">Beisebol</option>
+              <option value="futebol">Futebol</option>
+              <option value="futebol_americano">Fut. Americano</option>
+              <option value="rugby">Rugby</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-400">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
           </div>
         </div>
         
@@ -417,13 +436,11 @@
       if (cart.length === 0) return;
       
       const sizeMap = {
-        'P': 'S',
-        'M': 'M',
-        'G': 'L',
-        'GG': 'XL',
-        '2XL': '2XL',
-        '3XL': '3XL',
-        '4XL': '4XL'
+        'PP': 'S',
+        'P': 'M',
+        'M': 'L',
+        'G': 'XL',
+        'GG': '2XL'
       };
 
       let text = "Olá, gostaria de encomendar os seguintes itens:\n\n";
@@ -501,14 +518,12 @@
             
             <div class="mt-auto pt-3 flex flex-col gap-2 border-t border-slate-700/50">
               <select id="size-${domId}" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg p-2 text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                <option value="">Tamanho (Padrão BR)</option>
-                <option value="P">P (S Internacional)</option>
-                <option value="M">M (M Internacional)</option>
-                <option value="G">G (L Internacional)</option>
-                <option value="GG">GG (XL Internacional)</option>
-                <option value="2XL">2XL</option>
-                <option value="3XL">3XL</option>
-                <option value="4XL">4XL</option>
+                <option value="">Escolha o Tamanho</option>
+                <option value="PP">PP</option>
+                <option value="P">P</option>
+                <option value="M">M</option>
+                <option value="G">G</option>
+                <option value="GG">GG</option>
               </select>
               
               <button onclick="addToCart('${item.link}')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg transition-colors text-xs flex items-center justify-center gap-1 shadow-sm">
@@ -562,20 +577,50 @@
       }, 400);
     });
 
+    // Mudança de Categoria e Auto-Pesquisa
+    document.getElementById('category').addEventListener('change', (e) => {
+      const cat = e.target.value;
+      const sub = document.getElementById('sub-category-wrapper');
+      
+      if (cat === 'esportes') {
+        sub.classList.remove('hidden');
+      } else {
+        sub.classList.add('hidden');
+      }
+      
+      // Auto-pesquisa se estiver vazio (Mais Recentes)
+      if (document.getElementById('query').value.trim() === '') {
+        document.getElementById('btn-search').click();
+      }
+    });
+
+    document.getElementById('sub-category').addEventListener('change', () => {
+      if (document.getElementById('query').value.trim() === '') {
+        document.getElementById('btn-search').click();
+      }
+    });
+
     // Busca Real (SSE)
     document.getElementById('btn-search').addEventListener('click', () => {
       showingFavorites = false;
       showingCart = false;
       cartContainer.classList.add('hidden');
       
-      const query = document.getElementById('query').value;
-      const category = document.getElementById('category').value;
-      if (!query) return;
+      const query = document.getElementById('query').value.trim();
+      let category = document.getElementById('category').value;
+      
+      // Mapeamento de subcategoria
+      if (category === 'esportes') {
+        const sub = document.getElementById('sub-category').value;
+        if (sub && sub !== 'geral') {
+          category = 'esportes_' + sub;
+        }
+      }
 
       document.getElementById('search-spinner').classList.remove('hidden');
       document.getElementById('bottom-status').classList.remove('hidden');
       document.getElementById('stat-encontrados').innerText = '0';
-      document.getElementById('results-title').innerText = "Resultados";
+      document.getElementById('results-title').innerText = query ? "Resultados" : "Últimos Lançamentos";
       document.getElementById('results-list').innerHTML = '';
       container.classList.remove('hidden');
 
