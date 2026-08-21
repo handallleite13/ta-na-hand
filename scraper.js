@@ -4,49 +4,72 @@ puppeteer.use(StealthPlugin());
 const fs = require('fs');
 
 const lojas = {
-  esportes: [
-    "http://007007haoyuntiyu.x.yupoo.com",
-    "https://aodong888.x.yupoo.com",
-    "https://changjiangsports.x.yupoo.com",
-    "https://dongshanstore.x.yupoo.com",
-    "https://feitengsports.x.yupoo.com",
-    "https://football-all.x.yupoo.com",
-    "https://football-allyuanyan.x.yupoo.com",
-    "https://qiumishijie.x.yupoo.com",
-    "https://xingkong-sports.x.yupoo.com",
-    "https://xingkong-sports.x.zhidian-inc.cn",
-    "https://yiyisports2016.x.yupoo.com",
-    "https://1215795243.x.yupoo.com",
-    "https://1215795243.x.zhidian-inc.cn",
-    "https://3179704378.x.yupoo.com",
-    "https://407131796.x.yupoo.com",
-    "https://8618320710438.x.yupoo.com",
-    "https://8618320710438.x.zhidian-inc.cn"
-  ],
-  luxo: [
-    "https://vipno1.x.yupoo.com",
-    "https://gaoduan001.x.yupoo.com",
-    "https://chenzhefuzhuang.x.yupoo.com",
-    "https://chenzhefuzhuang.x.zhidian-inc.cn",
-    "https://sanguomaoye666.x.yupoo.com",
-    "https://yehecheng.x.yupoo.com",
-    "https://ywq2000.x.yupoo.com",
-    "https://dachang88.x.yupoo.com"
-  ],
-  outros: [
-    "https://599152050.x.yupoo.com",
-    "https://879322886k.x.yupoo.com",
-    "https://aosendi.x.yupoo.com",
-    "https://aowei2022.x.yupoo.com",
-    "https://ax6789.x.yupoo.com",
-    "https://huandong123.x.yupoo.com",
-    "https://huandong123.x.zhidian-inc.cn",
-    "https://huang456852.x.yupoo.com",
-    "https://pp111115555.x.yupoo.com",
-    "https://sf0594888.x.yupoo.com",
-    "https://ting8899.x.yupoo.com",
-    "https://ty-guoji2.x.yupoo.com"
-  ]
+  esportes: {
+    futebol: [
+      "http://007007haoyuntiyu.x.yupoo.com",
+      "https://aodong888.x.yupoo.com",
+      "https://changjiangsports.x.yupoo.com",
+      "https://dongshanstore.x.yupoo.com",
+      "https://feitengsports.x.yupoo.com",
+      "https://football-all.x.yupoo.com",
+      "https://football-allyuanyan.x.yupoo.com",
+      "https://qiumishijie.x.yupoo.com",
+      "https://1215795243.x.yupoo.com",
+      "https://1215795243.x.zhidian-inc.cn",
+      "https://3179704378.x.yupoo.com",
+      "https://407131796.x.yupoo.com",
+      "https://8618320710438.x.yupoo.com",
+      "https://8618320710438.x.zhidian-inc.cn"
+    ],
+    basquete: [
+      "https://xingkong-sports.x.yupoo.com",
+      "https://xingkong-sports.x.zhidian-inc.cn",
+      "https://chenzhefuzhuang.x.yupoo.com",
+      "https://chenzhefuzhuang.x.zhidian-inc.cn"
+    ],
+    automobilismo: [
+      "https://yiyisports2016.x.yupoo.com"
+    ],
+    futebol_americano: [
+      "https://chenzhefuzhuang.x.yupoo.com",
+      "https://chenzhefuzhuang.x.zhidian-inc.cn"
+    ],
+    rugby: [
+      "https://yiyisports2016.x.yupoo.com"
+    ],
+    beisebol: [
+      "https://chenzhefuzhuang.x.yupoo.com",
+      "https://chenzhefuzhuang.x.zhidian-inc.cn"
+    ]
+  },
+  luxo: {
+    geral: [
+      "https://vipno1.x.yupoo.com",
+      "https://gaoduan001.x.yupoo.com",
+      "https://chenzhefuzhuang.x.yupoo.com",
+      "https://chenzhefuzhuang.x.zhidian-inc.cn",
+      "https://sanguomaoye666.x.yupoo.com",
+      "https://yehecheng.x.yupoo.com",
+      "https://ywq2000.x.yupoo.com",
+      "https://dachang88.x.yupoo.com"
+    ]
+  },
+  outros: {
+    geral: [
+      "https://599152050.x.yupoo.com",
+      "https://879322886k.x.yupoo.com",
+      "https://aosendi.x.yupoo.com",
+      "https://aowei2022.x.yupoo.com",
+      "https://ax6789.x.yupoo.com",
+      "https://huandong123.x.yupoo.com",
+      "https://huandong123.x.zhidian-inc.cn",
+      "https://huang456852.x.yupoo.com",
+      "https://pp111115555.x.yupoo.com",
+      "https://sf0594888.x.yupoo.com",
+      "https://ting8899.x.yupoo.com",
+      "https://ty-guoji2.x.yupoo.com"
+    ]
+  }
 };
 
 const MAX_ABAS_SIMULTANEAS = 2;
@@ -213,15 +236,30 @@ class Scraper {
     
     let dominiosUsados = [];
     const cat = (categoriaEscolhida === 'todas') ? 'todas' : categoriaEscolhida;
-    if (cat === 'todas') {
-      dominiosUsados = [...lojas.esportes, ...lojas.luxo, ...lojas.outros];
-    } else {
-      dominiosUsados = lojas[cat] || lojas.esportes;
-    }
     
-    // Se for automobilismo, inclui as lojas de luxo porque F1/Marcas costumam estar lá também
-    if (category.includes('automobilismo')) {
-      dominiosUsados = [...new Set([...dominiosUsados, ...lojas.luxo, ...lojas.outros])];
+    const flattenGroup = (group) => {
+      let arr = [];
+      for (let key in group) {
+        if (Array.isArray(group[key])) arr.push(...group[key]);
+      }
+      return arr;
+    };
+
+    const todasEsportes = flattenGroup(lojas.esportes);
+    const todasLuxo = flattenGroup(lojas.luxo);
+    const todasOutros = flattenGroup(lojas.outros);
+
+    if (cat === 'todas') {
+      dominiosUsados = [...todasEsportes, ...todasLuxo, ...todasOutros];
+    } else if (cat === 'esportes') {
+      const sub = category.includes('_') ? category.split('_')[1] : 'geral';
+      if (sub === 'geral') {
+        dominiosUsados = todasEsportes;
+      } else {
+        dominiosUsados = lojas.esportes[sub] || todasEsportes;
+      }
+    } else {
+      dominiosUsados = lojas[cat] ? flattenGroup(lojas[cat]) : todasEsportes;
     }
     
     // Embaralha para que luxo seja buscado em paralelo com esportes
