@@ -129,29 +129,45 @@
       </div>
     </div>
 
-    <!-- View: Cart -->
-    <div id="cart-container" class="hidden flex flex-col gap-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-white">Meu Carrinho</h2>
-        <button onclick="document.getElementById('btn-toggle-cart').click()" class="text-indigo-400 hover:text-indigo-300 text-sm font-semibold flex items-center gap-1">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-          Voltar
-        </button>
-      </div>
 
-      <div id="cart-list" class="flex flex-col gap-4">
-        <!-- JS generates cart items here -->
-      </div>
-
-      <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 mt-4 text-center">
-        <p class="text-slate-400 text-sm mb-4">Ao clicar abaixo, nós vamos gerar o texto do seu pedido traduzido para o padrão chinês e copiar para o seu celular. Basta colar na conversa com o vendedor no WhatsApp!</p>
-        <button onclick="generateOrder()" class="w-full sm:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all text-lg flex items-center justify-center gap-2 mx-auto">
-          Gerar Pedido para WhatsApp
-        </button>
-      </div>
-    </div>
     
   </main>
+
+  <!-- Modal: Favorites -->
+  <div id="modal-favs" class="fixed inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700">
+      <div class="flex justify-between items-center p-4 border-b border-slate-700 bg-slate-900 shrink-0">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">Meus Favoritos</h2>
+        <button onclick="document.getElementById('modal-favs').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors bg-slate-700 hover:bg-rose-500 rounded-full p-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar bg-slate-800">
+        <div id="favs-list" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Cart -->
+  <div id="modal-cart" class="fixed inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-slate-800 rounded-2xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl border border-slate-700">
+      <div class="flex justify-between items-center p-4 border-b border-slate-700 bg-slate-900 shrink-0">
+        <h2 class="text-xl font-bold text-white flex items-center gap-2">Meu Carrinho</h2>
+        <button onclick="document.getElementById('modal-cart').classList.add('hidden')" class="text-slate-400 hover:text-white transition-colors bg-slate-700 hover:bg-rose-500 rounded-full p-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex flex-col gap-6 custom-scrollbar bg-slate-800">
+        <div id="cart-list" class="flex flex-col gap-4"></div>
+        <div class="bg-slate-900 p-6 rounded-2xl border border-slate-700 mt-4 text-center">
+          <p class="text-slate-400 text-sm mb-4">Ao clicar abaixo, nós vamos gerar o texto do seu pedido traduzido para o padrão chinês e copiar para o seu celular. Basta colar na conversa com o vendedor no WhatsApp!</p>
+          <button onclick="generateOrder()" class="w-full sm:w-auto px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg transition-all text-lg flex items-center justify-center gap-2 mx-auto">
+            Gerar Pedido para WhatsApp
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: Size Guide -->
   <div id="modal-sizes" class="fixed inset-0 bg-black/90 z-50 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
@@ -299,52 +315,57 @@
 
     // Toggle Favoritos
     document.getElementById('btn-toggle-favs').addEventListener('click', () => {
-      showingFavorites = !showingFavorites;
-      showingCart = false;
-      cartContainer.classList.add('hidden');
-      
-      if (showingFavorites) {
-        document.getElementById('search-bar-container').classList.add('hidden');
-        document.getElementById('status-container').classList.add('hidden');
-        if (evtSource) finishSearch();
-        container.classList.remove('hidden');
-        document.getElementById('results-title').innerText = "Meus Favoritos";
-        applyFiltersAndRender(favorites);
-      } else {
-        document.getElementById('search-bar-container').classList.remove('hidden');
-        document.getElementById('results-title').innerText = "Resultados Encontrados";
-        if (allResults.length > 0) {
-          container.classList.remove('hidden');
-          applyFiltersAndRender(allResults);
-        } else {
-          container.classList.add('hidden');
-        }
-      }
+      document.getElementById('modal-favs').classList.remove('hidden');
+      renderFavsModal();
     });
+
+    function renderFavsModal() {
+      const favsList = document.getElementById('favs-list');
+      if (favorites.length === 0) {
+        favsList.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-lg">Você não tem favoritos ainda.</div>';
+        return;
+      }
+      
+      favsList.innerHTML = favorites.map(item => `
+        <div class="bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-md relative group hover:border-slate-500 transition-colors">
+          <button onclick="toggleFav('${item.id}', '${item.link}')" class="absolute top-2 right-2 p-2 bg-black/50 backdrop-blur-md rounded-full text-rose-500 hover:text-white transition-colors z-10">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </button>
+          <a href="${item.link}" target="_blank" class="block aspect-square overflow-hidden bg-slate-900 relative">
+            <img src="${item.img || ''}" alt="Capa" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+          </a>
+          <div class="p-3 sm:p-4">
+            <h3 class="text-white text-sm sm:text-base font-medium line-clamp-2 leading-snug mb-3" title="${item.titulo}">${item.titulo}</h3>
+            <button onclick="addToCart(${item.id}, '${item.link}', '${item.titulo.replace(/'/g, "\\'")}', '${item.img}')" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+              Adicionar
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Update addToCart to update favs modal if open
+    const originalAddToCart = addToCart;
+    addToCart = function(id, link, titulo, img) {
+      originalAddToCart(id, link, titulo, img);
+      if (!document.getElementById('modal-favs').classList.contains('hidden')) {
+        renderFavsModal();
+      }
+    };
+
+    const originalToggleFav = toggleFav;
+    toggleFav = function(id, link) {
+      originalToggleFav(id, link);
+      if (!document.getElementById('modal-favs').classList.contains('hidden')) {
+        renderFavsModal();
+      }
+    };
 
     // Toggle Carrinho
     document.getElementById('btn-toggle-cart').addEventListener('click', () => {
-      showingCart = !showingCart;
-      showingFavorites = false;
-      
-      if (showingCart) {
-        document.getElementById('search-bar-container').classList.add('hidden');
-        document.getElementById('status-container').classList.add('hidden');
-        container.classList.add('hidden');
-        if (evtSource) finishSearch();
-        
-        cartContainer.classList.remove('hidden');
-        renderCart();
-      } else {
-        document.getElementById('search-bar-container').classList.remove('hidden');
-        cartContainer.classList.add('hidden');
-        
-        if (allResults.length > 0) {
-          container.classList.remove('hidden');
-          document.getElementById('results-title').innerText = "Resultados Encontrados";
-          applyFiltersAndRender(allResults);
-        }
-      }
+      document.getElementById('modal-cart').classList.remove('hidden');
+      renderCart();
     });
 
     // Funções de Favorito
@@ -408,7 +429,7 @@
       }
 
       cart.forEach(item => {
-        const proxyCapa = item.capa ? `/api/image?url=${encodeURIComponent(item.capa)}&ref=${encodeURIComponent(item.link)}` : '';
+        const proxyCapa = (item.capa || item.img) ? `/api/image?url=${encodeURIComponent(item.capa || item.img)}&ref=${encodeURIComponent(item.link)}` : '';
         const imgHtml = proxyCapa 
           ? `<img src="${proxyCapa}" class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-lg bg-slate-800 shrink-0">` 
           : `<div class="w-20 h-20 sm:w-24 sm:h-24 bg-slate-800 rounded-lg flex items-center justify-center shrink-0"><span class="text-xs text-slate-500">Sem Img</span></div>`;
@@ -494,8 +515,8 @@
       const heartColor = isFav ? "text-rose-500" : "text-white/70 hover:text-white";
       const heartFill = isFav ? "currentColor" : "none";
       
-      const proxyCapa = item.capa ? `/api/image?url=${encodeURIComponent(item.capa)}&ref=${encodeURIComponent(item.link)}` : '';
-      const capaImg = item.capa ? `<img src="${proxyCapa}" class="w-full aspect-square object-cover bg-slate-800 group-hover:scale-105 transition-transform duration-500" loading="lazy">` : `<div class="w-full aspect-square bg-slate-800 flex items-center justify-center text-slate-500 text-sm font-medium">Sem Imagem</div>`;
+      const proxyCapa = (item.capa || item.img) ? `/api/image?url=${encodeURIComponent(item.capa || item.img)}&ref=${encodeURIComponent(item.link)}` : '';
+      const capaImg = (item.capa || item.img) ? `<img src="${proxyCapa}" class="w-full aspect-square object-cover bg-slate-800 group-hover:scale-105 transition-transform duration-500" loading="lazy">` : `<div class="w-full aspect-square bg-slate-800 flex items-center justify-center text-slate-500 text-sm font-medium">Sem Imagem</div>`;
       
       const domId = item.id || btoa(item.link).replace(/[^a-zA-Z0-9]/g, '');
 
