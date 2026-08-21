@@ -186,6 +186,7 @@ class Scraper {
       dominiosUsados = lojas[categoriaEscolhida] || lojas.esportes;
     }
     
+    // Embaralha para que luxo seja buscado em paralelo com esportes
     dominiosUsados = dominiosUsados.sort(() => Math.random() - 0.5);
 
     dominiosUsados.forEach(dominio => {
@@ -195,13 +196,19 @@ class Scraper {
     });
 
     const totalLojas = dominiosUsados.length;
-    const THREADS = 20; 
-    this.emit('log', `🚀 Iniciando Varredura Flash HTTP (${THREADS} threads em ${totalLojas} Lojas)...`);
+    this.emit('log', `🕷️ Iniciando Varredura Turbo (${MAX_ABAS_SIMULTANEAS} abas em ${totalLojas} Lojas)...`);
+    
+    this.browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+    });
 
     let tempoInicio = Date.now();
     let workers = [];
-    for (let i = 0; i < THREADS; i++) {
-      workers.push(this.workerAba(i, palavrasChave, palavrasProibidas));
+    for (let i = 0; i < MAX_ABAS_SIMULTANEAS; i++) {
+      const page = await this.browser.newPage();
+      workers.push(this.workerAba(page, palavrasChave, palavrasProibidas));
     }
 
     const progressoInterval = setInterval(() => {
@@ -223,6 +230,11 @@ class Scraper {
       tempoMs: Date.now() - tempoInicio
     });
     
+    if (this.browser) {
+      await this.browser.close();
+      this.browser = null;
+    }
+
     if (this.albunsEncontrados.length > 0) {
       this.emit('log', '⏳ Organizando e traduzindo resultados para Português...');
       
@@ -246,9 +258,13 @@ class Scraper {
     }
   }
 
-  async workerAba(workerId, palavrasChave, palavrasProibidas) {
-    const cheerio = require('cheerio');
-    
+  async workerAba(page, palavrasChave, palavrasProibidas) {
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) req.abort();
+      else req.continue();
+    });
+
     while (!this.pausarExecucao) {
       if (this.filaDeTarefas.length === 0) {
         if (this.tarefasAtivas === 0) break;
@@ -263,25 +279,22 @@ class Scraper {
       const urlBusca = `${tarefa.urlBase}/search/album?uid=1&q=${encodeURIComponent(tarefa.keyword)}&page=${tarefa.pagina}`;
 
       try {
-        const res = await fetch(urlBusca, {
-           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
-           signal: AbortSignal.timeout(10000)
-        });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const html = await res.text();
-        const $ = cheerio.load(html);
-        
-        const dadosPagina = [];
-        $('a.album__main').each((i, el) => {
-           const titulo = $(el).attr('title') ? $(el).attr('title').toLowerCase() : '';
-           const link = $(el).attr('href');
-           const imgEl = $(el).find('img');
-           let coverUrl = '';
-           if (imgEl.length > 0) {
-              coverUrl = imgEl.attr('data-src') || imgEl.attr('src') || '';
+        await page.goto(urlBusca, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        const dadosPagina = await page.evaluate(() => {
+          const itens = Array.from(document.querySelectorAll('a.album__main'));
+          return itens.map(album => {
+            const imgEl = album.querySelector('img');
+            let coverUrl = '';
+            if (imgEl) {
+              coverUrl = imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || '';
               if (coverUrl.startsWith('//')) coverUrl = 'https:' + coverUrl;
-           }
-           dadosPagina.push({ titulo, link, capa: coverUrl });
+            }
+            return {
+              titulo: album.getAttribute('title') ? album.getAttribute('title').toLowerCase() : '',
+              link: album.getAttribute('href'),
+              capa: coverUrl
+            };
+          });
         });
 
         if (dadosPagina.length > 0) {
@@ -296,6 +309,7 @@ class Scraper {
           if (matches.length > 0) {
             for (const m of matches) {
               const linkCompleto = m.link.startsWith('http') ? m.link : tarefa.urlBase + m.link;
+              
               const idMatch = linkCompleto.match(/\/albums\/(\d+)/);
               const albumId = idMatch ? idMatch[1] : linkCompleto;
 
@@ -319,6 +333,7 @@ class Scraper {
       this.tarefasAtivas--;
       this.paginasLidas++;
     }
+    await page.close();
   }
 }
 
