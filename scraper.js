@@ -115,7 +115,6 @@ class Scraper {
 
     if (!respostaLimpa) return;
 
-    // Dicionário Inteligente para evitar confusões comuns no futebol (ex: Santos vs Santos Laguna)
     const dicionarioFutebol = {
       'santos': { proibidas: ['laguna', 'diguna', '拉古纳', '帝古纳'] },
       'real': { proibidas: ['sociedad', 'betis', '皇家社会', '皇家贝蒂斯'] },
@@ -125,7 +124,6 @@ class Scraper {
       'flamengo': { proibidas: [] }
     };
 
-    // Extrair palavras proibidas customizadas (começando com -)
     const partes = respostaLimpa.split(/\s+/);
     let queryPositiva = [];
     let proibidasCustom = [];
@@ -137,11 +135,9 @@ class Scraper {
 
     if (!respostaLimpa) return;
     
-    // Injetar proibições do dicionário inteligente silenciosamente
     const palavrasBusca = respostaLimpa.split(' ');
     for (const pb of palavrasBusca) {
       if (dicionarioFutebol[pb]) {
-        // Só adiciona a proibida se o usuário não tiver digitado ela propositalmente
         const proibs = dicionarioFutebol[pb].proibidas.filter(p => !respostaLimpa.includes(p));
         proibidasCustom.push(...proibs);
       }
@@ -165,12 +161,11 @@ class Scraper {
     this.emit('log', `⏳ Traduzindo termos...`);
     let palavrasChaveSet = new Set();
     
-    // Capitaliza a primeira letra de cada palavra para forçar o tradutor a tratar como nome próprio
     const toTitleCase = (str) => str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
     
     for (const t of termosBase) {
       const termoProprio = toTitleCase(t);
-      palavrasChaveSet.add(t); // mantem a original tbm
+      palavrasChaveSet.add(t);
       const en = await traduzir(termoProprio, 'en'); if (en) palavrasChaveSet.add(en);
       const ru = await traduzir(termoProprio, 'ru'); if (ru) palavrasChaveSet.add(ru);
       const zh = await traduzir(termoProprio, 'zh-CN'); if (zh) palavrasChaveSet.add(zh);
@@ -179,85 +174,62 @@ class Scraper {
     const palavrasChaveExibicao = [...palavrasChaveSet].filter(Boolean);
     this.emit('log', `✅ Buscando por: [ ${palavrasChaveExibicao.join(' | ')} ]`);
     
-    // Lowercase for the actual matching
-    const palavrasChave = palavrasChaveExibicao.map(t => t.toLowerCase());
+    const palavrasChave = [...palavrasChaveSet].map(p => p.toLowerCase());
     
-    const reqInfantil = /(infantil|crian[çc]a|kid|menino|menina|child)/i.test(respostaLimpa);
-    const reqFeminino = /(feminin[oa]|mulher|woman|women|lady)/i.test(respostaLimpa);
-
-    let palavrasProibidas = [];
+    const reqFeminino = palavrasChave.some(kw => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/.test(kw));
+    const reqInfantil = palavrasChave.some(kw => /kids|child|youth|童|infantil|menino|menina|boy|girl/.test(kw));
+    
+    let palavrasProibidas = [...proibidasCustom];
     if (!reqInfantil) palavrasProibidas.push('kids', 'child', 'youth', '童', 'infantil', 'menino', 'menina', 'boy', 'girl');
     if (!reqFeminino) palavrasProibidas.push('women', 'woman', 'female', 'lady', 'ladies', '女', 'feminino', 'feminina', 'mulher');
+    if (!palavrasChave.some(kw => /camisa|shirt|jersey|kit|jacket|pants|suit|conjunto/.test(kw))) {
+      palavrasProibidas.push('pants', 'suit', 'jacket', 'conjunto', 'calça', 'calca');
+    }
     
-    // Adicionar as proibidas inseridas pelo usuário
-    if (proibidasCustom.length > 0) {
-      palavrasProibidas.push(...proibidasCustom);
-      for (const p of proibidasCustom) {
-        const zh = await traduzir(toTitleCase(p), 'zh-CN');
-        if (zh) palavrasProibidas.push(zh.toLowerCase());
-      }
-    }
-
-    if (palavrasProibidas.length > 0) {
-      this.emit('log', `🚫 Ocultando palavras e categorias indesejadas...`);
-    }
-
+    const categoriaEscolhida = (category === 'todas') ? 'todas' : category;
     let dominiosUsados = [];
-    if (category === 'esportes') dominiosUsados = lojas.esportes;
-    else if (category === 'luxo') dominiosUsados = lojas.luxo;
-    else if (category === 'outros') dominiosUsados = lojas.outros;
-    else dominiosUsados = [...lojas.esportes, ...lojas.luxo, ...lojas.outros];
+    if (categoriaEscolhida === 'todas') {
+      dominiosUsados = [...lojas.esportes, ...lojas.luxo, ...lojas.outros];
+    } else {
+      dominiosUsados = lojas[categoriaEscolhida] || lojas.esportes;
+    }
+    
+    dominiosUsados = dominiosUsados.sort(() => Math.random() - 0.5);
 
-    this.filaDeTarefas = [];
     dominiosUsados.forEach(dominio => {
       palavrasChave.forEach(kw => {
         this.filaDeTarefas.push({ urlBase: dominio.replace(/\/$/, ''), keyword: kw, pagina: 1 });
       });
     });
-    this.albunsEncontrados = [];
-    this.paginasLidas = 0;
-    this.tarefasAtivas = 0;
-    this.pausarExecucao = false;
 
-    await this.iniciarPesquisa(palavrasChave, limiteRecentes, palavrasProibidas, dominiosUsados.length);
-  }
-
-  async iniciarPesquisa(palavrasChave, limiteRecentes, palavrasProibidas, totalLojas) {
-    this.emit('log', `🕷️ Iniciando Varredura Turbo (${MAX_ABAS_SIMULTANEAS} abas em ${totalLojas} Lojas)...`);
-    
-    this.browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
-    });
+    const totalLojas = dominiosUsados.length;
+    const THREADS = 20; 
+    this.emit('log', `🚀 Iniciando Varredura Flash HTTP (${THREADS} threads em ${totalLojas} Lojas)...`);
 
     let tempoInicio = Date.now();
+    let workers = [];
+    for (let i = 0; i < THREADS; i++) {
+      workers.push(this.workerAba(i, palavrasChave, palavrasProibidas));
+    }
 
-    const loopConsole = setInterval(() => {
-      if (this.pausarExecucao) return clearInterval(loopConsole);
-      const decorridoSec = (Date.now() - tempoInicio) / 1000;
-      const vel = this.paginasLidas / (decorridoSec || 1);
-      const restanteSecs = vel > 0 ? this.filaDeTarefas.length / vel : 0;
-      const mm = Math.floor(restanteSecs / 60);
-      const ss = Math.floor(restanteSecs % 60).toString().padStart(2, '0');
-      
-      this.emit('progress', {
-         lidas: this.paginasLidas,
-         fila: this.filaDeTarefas.length,
-         encontrados: this.albunsEncontrados.length,
-         eta: `${mm}m${ss}s`
+    const progressoInterval = setInterval(() => {
+      this.emit('progress', { 
+        lidas: this.paginasLidas,
+        fila: this.filaDeTarefas.length,
+        encontrados: this.albunsEncontrados.length,
+        tempoMs: Date.now() - tempoInicio
       });
     }, 1000);
 
-    const promessasWorkers = [];
-    for (let i = 0; i < MAX_ABAS_SIMULTANEAS; i++) {
-      promessasWorkers.push(this.workerAba(palavrasChave, palavrasProibidas));
-    }
-
-    await Promise.all(promessasWorkers);
-
-    clearInterval(loopConsole);
-    if (this.browser) await this.browser.close();
+    await Promise.all(workers);
+    clearInterval(progressoInterval);
+    
+    this.emit('progress', { 
+      lidas: this.paginasLidas,
+      fila: 0,
+      encontrados: this.albunsEncontrados.length,
+      tempoMs: Date.now() - tempoInicio
+    });
     
     if (this.albunsEncontrados.length > 0) {
       this.emit('log', '⏳ Organizando e traduzindo resultados para Português...');
@@ -268,10 +240,7 @@ class Scraper {
       });
       this.albunsEncontrados.sort((a, b) => b.id - a.id);
       
-      let resultadosFinais = this.albunsEncontrados;
-      if (limiteRecentes > 0) {
-        resultadosFinais = this.albunsEncontrados.slice(0, limiteRecentes);
-      }
+      let resultadosFinais = limiteRecentes > 0 ? this.albunsEncontrados.slice(0, limiteRecentes) : this.albunsEncontrados;
       
       let resultsArr = [];
       for (const item of resultadosFinais) {
@@ -285,14 +254,9 @@ class Scraper {
     }
   }
 
-  async workerAba(palavrasChave, palavrasProibidas) {
-    const page = await this.browser.newPage();
-    await page.setRequestInterception(true);
-    page.on('request', (req) => {
-      if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) req.abort();
-      else req.continue();
-    });
-
+  async workerAba(workerId, palavrasChave, palavrasProibidas) {
+    const cheerio = require('cheerio');
+    
     while (!this.pausarExecucao) {
       if (this.filaDeTarefas.length === 0) {
         if (this.tarefasAtivas === 0) break;
@@ -307,22 +271,25 @@ class Scraper {
       const urlBusca = `${tarefa.urlBase}/search/album?uid=1&q=${encodeURIComponent(tarefa.keyword)}&page=${tarefa.pagina}`;
 
       try {
-        await page.goto(urlBusca, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        const dadosPagina = await page.evaluate(() => {
-          const itens = Array.from(document.querySelectorAll('a.album__main'));
-          return itens.map(album => {
-            const imgEl = album.querySelector('img');
-            let coverUrl = '';
-            if (imgEl) {
-              coverUrl = imgEl.getAttribute('data-src') || imgEl.getAttribute('src') || '';
+        const res = await fetch(urlBusca, {
+           headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+           signal: AbortSignal.timeout(10000)
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const html = await res.text();
+        const $ = cheerio.load(html);
+        
+        const dadosPagina = [];
+        $('a.album__main').each((i, el) => {
+           const titulo = $(el).attr('title') ? $(el).attr('title').toLowerCase() : '';
+           const link = $(el).attr('href');
+           const imgEl = $(el).find('img');
+           let coverUrl = '';
+           if (imgEl.length > 0) {
+              coverUrl = imgEl.attr('data-src') || imgEl.attr('src') || '';
               if (coverUrl.startsWith('//')) coverUrl = 'https:' + coverUrl;
-            }
-            return {
-              titulo: album.getAttribute('title') ? album.getAttribute('title').toLowerCase() : '',
-              link: album.getAttribute('href'),
-              capa: coverUrl
-            };
-          });
+           }
+           dadosPagina.push({ titulo, link, capa: coverUrl });
         });
 
         if (dadosPagina.length > 0) {
@@ -337,13 +304,13 @@ class Scraper {
           if (matches.length > 0) {
             for (const m of matches) {
               const linkCompleto = m.link.startsWith('http') ? m.link : tarefa.urlBase + m.link;
-              
-              // Evita duplicatas se o mesmo album vier de keywords diferentes
-              if (this.albunsEncontrados.some(a => a.link === linkCompleto)) continue;
+              const idMatch = linkCompleto.match(/\/albums\/(\d+)/);
+              const albumId = idMatch ? idMatch[1] : linkCompleto;
 
-              this.albunsEncontrados.push({ titulo: m.titulo, link: linkCompleto, capa: m.capa });
+              if (this.albunsEncontrados.some(a => a.albumId === albumId)) continue;
+
+              this.albunsEncontrados.push({ titulo: m.titulo, link: linkCompleto, capa: m.capa, albumId: albumId });
               
-              // Traduz em tempo real (em background) e emite para o frontend
               traduzir(m.titulo, 'pt').then(tituloPt => {
                 this.emit('album_found', { 
                   titulo: (tituloPt || m.titulo).toUpperCase(), 
@@ -360,7 +327,6 @@ class Scraper {
       this.tarefasAtivas--;
       this.paginasLidas++;
     }
-    await page.close();
   }
 }
 

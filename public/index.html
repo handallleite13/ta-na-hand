@@ -199,10 +199,34 @@
       renderAll(filtered);
     }
 
-    document.getElementById('query').addEventListener('keypress', (e) => {
+    let typingTimer;
+    document.getElementById('query').addEventListener('keyup', (e) => {
       if (e.key === 'Enter') {
+        clearTimeout(typingTimer);
         document.getElementById('btn-search').click();
+        return;
       }
+      
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(async () => {
+        const query = e.target.value.trim();
+        // Não faz autocomplete se a busca estiver rolando ou no modo favoritos
+        if (showingFavorites || document.getElementById('btn-search').classList.contains('hidden')) return;
+        
+        if (query.length >= 3) {
+          try {
+            const res = await fetch(`/api/autocomplete?q=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+              container.classList.remove('hidden');
+              document.getElementById('results-title').innerText = "Resultados Rápidos (Memória)";
+              allResults = data;
+              allResults.sort((a, b) => b.id - a.id);
+              applyFiltersAndRender(allResults);
+            }
+          } catch(err) {}
+        }
+      }, 400); // 400ms debounce
     });
 
     document.getElementById('btn-search').addEventListener('click', () => {
@@ -252,8 +276,12 @@
         const match = item.link.match(/\/albums\/(\d+)/);
         item.id = match ? parseInt(match[1], 10) : 0;
         
-        // Verifica se já existe para evitar bugs visuais
-        if (!allResults.find(a => a.link === item.link)) {
+        // Verifica se já existe para evitar bugs visuais (Deduplica pelo ID único do Yupoo ignorando domínios espelhos)
+        const isDuplicate = item.id !== 0 
+          ? allResults.find(a => a.id === item.id) 
+          : allResults.find(a => a.link === item.link);
+
+        if (!isDuplicate) {
           allResults.push(item);
           allResults.sort((a, b) => b.id - a.id);
           applyFiltersAndRender(allResults);
