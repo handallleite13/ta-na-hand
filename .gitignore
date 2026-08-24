@@ -1,0 +1,7 @@
+node_modules/
+cache.json
+cache_busca.json
+categories.html
+parse.js
+
+.env
