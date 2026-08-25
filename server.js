@@ -161,7 +161,7 @@ app.get('/api/autocomplete', (req, res) => {
         return arr;
       };
       let dominiosValidos = [];
-      if (c.startsWith('esportes')) {
+      if (c.startsWith('esportes') || c === 'fitness') {
           dominiosValidos = flattenGroup(lojas.esportes);
         } else if (lojas[c]) {
           dominiosValidos = flattenGroup(lojas[c]);
@@ -187,6 +187,26 @@ app.get('/api/autocomplete', (req, res) => {
               resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports));
            }
         }
+        // --- NEW: FITNESS CATEGORY ---
+        if (c === 'fitness') {
+           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身/i;
+           const teamTrainingRegex = /tracksuit|survetement|chandal|tuta|训练|套装|出场服|nba|nfl|mlb|f1|racing|ferrari|mercedes|red\s?bull|mclaren|porsche|rugby|all black|库里|飞人|男篮/i;
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              return t.match(fitnessRegex) && !t.match(teamTrainingRegex);
+           });
+        }
+
+        // --- NEW: FITNESS CATEGORY ---
+        if (c === 'fitness') {
+           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身/i;
+           const teamTrainingRegex = /tracksuit|survetement|chandal|tuta|训练|套装|出场服|nba|nfl|mlb|f1|racing|ferrari|mercedes|red\s?bull|mclaren|porsche|rugby|all black|库里|飞人|男篮/i;
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              return t.match(fitnessRegex) && !t.match(teamTrainingRegex);
+           });
+        }
+
     }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
@@ -361,8 +381,7 @@ app.get('/api/autocomplete', (req, res) => {
         
         let targetDomains = [];
         const parts = c.split('_');
-        if (parts[0] === 'esportes' && lojas.esportes) {
-                // Ignore domain-based subcategories for esportes, use ALL esportes domains
+        if ((parts[0] === 'esportes' || parts[0] === 'fitness') && lojas.esportes) {
                 targetDomains = flattenGroup(lojas.esportes);
              } else if (parts.length === 1 && lojas[parts[0]]) {
                 targetDomains = flattenGroup(lojas[parts[0]]);

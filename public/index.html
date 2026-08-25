@@ -57,6 +57,7 @@
               <option value="todas" selected>🌍 Todas as Lojas</option>
               <option value="esportes">⚽ Esportes</option>
                 <option value="calcados">👟 Calçados</option>
+          <option value="fitness">🏋️ Fitness / Academia</option>
                 <option value="luxo">💎 Grifes & Luxo</option>
               <option value="outros">📦 Outros</option>
             </select>
@@ -119,6 +120,7 @@
           <button data-filter="masculino" class="filter-btn px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold rounded-full transition-colors">Masculino</button>
           <button data-filter="player" class="filter-btn px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold rounded-full transition-colors">Jogador</button>
           <button data-filter="fan" class="filter-btn px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold rounded-full transition-colors">Torcedor</button>
+          <button id="btn-treino" data-filter="treino" class="filter-btn px-4 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm font-semibold rounded-full transition-colors hidden">Roupa de Treino</button>
         </div>
       </div>
       
@@ -146,7 +148,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.40</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.41</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -567,7 +569,9 @@
           filtered = dataset.filter(i => /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.titulo) || /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
         } else if (currentFilter === 'feminino') {
           filtered = dataset.filter(i => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.titulo) || /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original));
-        } else if (currentFilter === 'masculino') {
+        } else if (currentFilter === 'treino') {
+            filtered = dataset.filter(i => /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(i.titulo) || /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(i.original));
+          } else if (currentFilter === 'masculino') {
           filtered = dataset.filter(i => !/women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original) && !/kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
         }
         
@@ -631,6 +635,8 @@
         `;
         sub.classList.remove('hidden');
       } else if (cat === 'calcados') {
+        document.getElementById('btn-treino').classList.add('hidden');
+        if (currentFilter === 'treino') document.querySelector('[data-filter="all"]').click();
         subSelect.innerHTML = `
           <option value="geral">Geral</option>
           <option value="chuteiras">Chuteiras</option>
