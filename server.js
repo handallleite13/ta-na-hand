@@ -2,6 +2,9 @@ const express = require('express');
 
 
 const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
+const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
+const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤/i;
+
 
 const sportKeywords = {
   basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball|jordan|湖人|勇士|公牛|凯尔特人|热火|尼克斯|篮网|独行侠|太阳|雄鹿|76人|掘金/i,
@@ -11,6 +14,10 @@ const sportKeywords = {
   rugby: /rugby|sevens|all blacks?|sydney rooster|nrl|brumbies|crusaders|hurricanes/i
 };
 const allOtherSports = new RegExp(Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
+
+const teamTrainingRegex = new RegExp('tracksuit|survetement|chandal|tuta|训练|出场服|主场|客场|球衣|足球|泰版|球迷版|球员版|法国|阿根廷|巴西|英格兰|葡萄牙|西班牙|意大利|德国|荷兰|madrid|barcelona|psg|munich|united|city|arsenal|chelsea|liverpool|juventus|milan|inter|spurs|tottenham|ajax|boca|river plate|flamengo|corinthians|palmeiras|sao paulo|gremio|cruzeiro|atletico|vasco|fluminense|botafogo|巴黎|皇马|巴塞|巴萨|拜仁|曼城|曼联|阿森纳|切尔西|利物浦|尤文|米兰|马竞|多特|国米|罗马|' + Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
+const outrosEsportesRegex = /nhl|hockey|冰球|afl|australian rules|tennis|网球|golf|高尔夫|badminton|羽毛球|volleyball|排球|cycling|骑行|boxing|拳击|mma|ufc/i;
+const globalSportsRegex = new RegExp(teamTrainingRegex.source + '|' + outrosEsportesRegex.source, 'i');
 
 const path = require('path');
 const { Scraper } = require('./scraper');
@@ -173,15 +180,33 @@ app.get('/api/autocomplete', (req, res) => {
         }
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
       resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
-      const chuteiraRegexLatest = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
-      if (c === 'calcados_chuteiras') {
-         resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
+            if (c === 'calcados_chuteiras') {
+         resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegex));
       } else if (c === 'calcados_casuais') {
-           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
+           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegex));
         }
 
         // --- NEW: ESPORTES KEYWORD FILTERING ---
         
+        
+        // --- GLOBAL ISOLATION FOR LUXO AND OUTROS ---
+        if (c.startsWith('luxo_') || c.startsWith('outros_')) {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              // Block Bags, Shoes, Fitness, and ALL Sports
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(globalSportsRegex);
+           });
+        }
+        
+        // --- NEW: ESPORTES OUTROS ---
+        if (c === 'esportes_outros') {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              // Must not match the major sports, bags, or fitness.
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(allOtherSports);
+           });
+        }
+
         // --- NEW: BOLSAS CATEGORY ---
         if (c === 'bolsas') {
            resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(bagsRegex));
@@ -201,8 +226,6 @@ app.get('/api/autocomplete', (req, res) => {
         }
         // --- NEW: FITNESS CATEGORY ---
         if (c === 'fitness') {
-           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤/i;
-           const teamTrainingRegex = new RegExp('tracksuit|survetement|chandal|tuta|出场服|madrid|barcelona|psg|munich|united|city|arsenal|chelsea|liverpool|juventus|milan|inter|spurs|tottenham|ajax|boca|river plate|flamengo|corinthians|palmeiras|sao paulo|gremio|cruzeiro|atletico|vasco|fluminense|botafogo|巴黎|皇马|巴塞|拜仁|曼城|曼联|阿森纳|切尔西|利物浦|尤文|米兰|马竞|多特|国米|罗马|' + Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
               return t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(bagsRegex);
@@ -211,8 +234,6 @@ app.get('/api/autocomplete', (req, res) => {
 
         // --- NEW: FITNESS CATEGORY ---
         if (c === 'fitness') {
-           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤/i;
-           const teamTrainingRegex = new RegExp('tracksuit|survetement|chandal|tuta|出场服|madrid|barcelona|psg|munich|united|city|arsenal|chelsea|liverpool|juventus|milan|inter|spurs|tottenham|ajax|boca|river plate|flamengo|corinthians|palmeiras|sao paulo|gremio|cruzeiro|atletico|vasco|fluminense|botafogo|巴黎|皇马|巴塞|拜仁|曼城|曼联|阿森纳|切尔西|利物浦|尤文|米兰|马竞|多特|国米|罗马|' + Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
               return t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(bagsRegex);
@@ -427,6 +448,23 @@ app.get('/api/autocomplete', (req, res) => {
         
         // --- NEW: ESPORTES STRICT KEYWORD FILTERING FOR SEARCH ---
         
+        
+        // --- GLOBAL ISOLATION FOR LUXO AND OUTROS ---
+        if (c && (c.startsWith('luxo_') || c.startsWith('outros_'))) {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(globalSportsRegex);
+           });
+        }
+
+        // --- NEW: ESPORTES OUTROS ---
+        if (c === 'esportes_outros') {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(allOtherSports);
+           });
+        }
+
         // --- NEW: BOLSAS CATEGORY FOR SEARCH ---
         if (c === 'bolsas') {
            resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(bagsRegex));

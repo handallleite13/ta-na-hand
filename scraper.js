@@ -39,7 +39,6 @@ const lojas = {
   luxo: {
       geral: [
         "https://vipno1.x.yupoo.com",
-        "https://chenzhefuzhuang.x.yupoo.com",
         "https://sanguomaoye666.x.yupoo.com"
       ]
     },
