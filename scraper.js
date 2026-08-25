@@ -49,6 +49,18 @@ const lojas = {
         "https://yehecheng.x.yupoo.com",
         "https://ywq2000.x.yupoo.com",
         "https://dachang88.x.yupoo.com"
+      ],
+      chuteiras: [
+        "https://gaoduan001.x.yupoo.com",
+        "https://yehecheng.x.yupoo.com",
+        "https://ywq2000.x.yupoo.com",
+        "https://dachang88.x.yupoo.com"
+      ],
+      casuais: [
+        "https://gaoduan001.x.yupoo.com",
+        "https://yehecheng.x.yupoo.com",
+        "https://ywq2000.x.yupoo.com",
+        "https://dachang88.x.yupoo.com"
       ]
     },
   outros: {

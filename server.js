@@ -162,6 +162,17 @@ app.get('/api/autocomplete', (req, res) => {
       }
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
       resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
+      if (c === 'calcados_chuteiras') {
+         resultados = resultados.filter(item => {
+            const t = (item.titulo || '').toLowerCase();
+            return t.match(/fg|tf|ag|sg|ic|in|chuteira|足球鞋|football/);
+         });
+      } else if (c === 'calcados_casuais') {
+         resultados = resultados.filter(item => {
+            const t = (item.titulo || '').toLowerCase();
+            return !t.match(/fg|tf|ag|sg|ic|in|chuteira|足球鞋|football/);
+         });
+      }
     }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)

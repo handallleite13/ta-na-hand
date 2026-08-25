@@ -146,7 +146,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.35</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.36</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -617,8 +617,25 @@
     document.getElementById('category').addEventListener('change', (e) => {
       const cat = e.target.value;
       const sub = document.getElementById('sub-category-wrapper');
+      const subSelect = document.getElementById('sub-category');
       
       if (cat === 'esportes') {
+        subSelect.innerHTML = `
+          <option value="geral">Geral</option>
+          <option value="automobilismo">Automobilismo</option>
+          <option value="basquete">Basquete</option>
+          <option value="beisebol">Beisebol</option>
+          <option value="futebol">Futebol</option>
+          <option value="futebol_americano">Fut. Americano</option>
+          <option value="rugby">Rugby</option>
+        `;
+        sub.classList.remove('hidden');
+      } else if (cat === 'calcados') {
+        subSelect.innerHTML = `
+          <option value="geral">Geral</option>
+          <option value="chuteiras">Chuteiras</option>
+          <option value="casuais">Outros Calçados</option>
+        `;
         sub.classList.remove('hidden');
       } else {
         sub.classList.add('hidden');
