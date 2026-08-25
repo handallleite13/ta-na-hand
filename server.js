@@ -160,7 +160,7 @@ app.get('/api/autocomplete', (req, res) => {
   let resultados = database;
   
   // Filtrar por Categoria igual na busca
-  if (c !== 'todas' && !c.startsWith('fitness')) {
+  if (c !== 'todas') {
       const { lojas } = require('./scraper');
       const flattenGroup = (group) => {
         let arr = [];
@@ -172,12 +172,14 @@ app.get('/api/autocomplete', (req, res) => {
       };
       let dominiosValidos = [];
       if (c.startsWith('esportes') || c === 'bolsas') {
-          dominiosValidos = flattenGroup(lojas.esportes);
-        } else if (lojas[c]) {
-          dominiosValidos = flattenGroup(lojas[c]);
-        } else if (c.includes('_') && lojas[c.split('_')[0]]) {
-          dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
-        }
+        dominiosValidos = flattenGroup(lojas.esportes);
+      } else if (c.startsWith('fitness')) {
+        dominiosValidos = flattenGroup(lojas); // Fitness scans all domains!
+      } else if (lojas[c]) {
+        dominiosValidos = flattenGroup(lojas[c]);
+      } else if (c.includes('_') && lojas[c.split('_')[0]]) {
+        dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
+      }
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
       resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
             if (c === 'calcados_chuteiras') {
