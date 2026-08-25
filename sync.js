@@ -126,7 +126,7 @@ async function syncDomain(browser, dominio) {
               finalImg = img.startsWith('//') ? 'https:' + img : img;
             }
             results.push({
-              link: domain + a,
+              link: domain + a.split('&')[0],
               titulo: title,
               img: finalImg,
               domain: domain
@@ -190,3 +190,4 @@ async function runSync() {
 }
 
 runSync().catch(console.error);
+

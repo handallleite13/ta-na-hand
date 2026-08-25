@@ -129,29 +129,28 @@ app.get('/api/autocomplete', (req, res) => {
   
   // Filtrar por Categoria igual na busca
   if (c !== 'todas') {
-    const isEsportes = c.startsWith('esportes');
-    const sub = c.includes('_') ? c.split('_')[1] : '';
-    const { lojas } = require('./scraper');
-    const flattenGroup = (group) => {
-      let arr = [];
-      for (let key in group) {
-        if (Array.isArray(group[key])) arr.push(...group[key]);
+      const { lojas } = require('./scraper');
+      const flattenGroup = (group) => {
+        let arr = [];
+        for (let key in group) {
+          if (Array.isArray(group[key])) arr.push(...group[key]);
+          else if (typeof group[key] === 'object') arr = arr.concat(flattenGroup(group[key]));
+        }
+        return arr;
+      };
+      let dominiosValidos = [];
+      if (c === 'esportes') {
+        dominiosValidos = flattenGroup(lojas.esportes);
+      } else if (c.startsWith('esportes_') && lojas.esportes[c.split('_')[1]]) {
+        dominiosValidos = lojas.esportes[c.split('_')[1]];
+      } else if (lojas[c]) {
+        dominiosValidos = flattenGroup(lojas[c]);
+      } else if (c.includes('_') && lojas[c.split('_')[0]]) {
+        dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
       }
-      return arr;
-    };
-    
-    let dominiosValidos = [];
-    if (c === 'esportes') {
-      dominiosValidos = flattenGroup(lojas.esportes);
-    } else if (isEsportes && lojas.esportes[sub]) {
-      dominiosValidos = lojas.esportes[sub];
-    } else if (lojas[c]) {
-      dominiosValidos = flattenGroup(lojas[c]);
+      dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
+      resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
     }
-    
-    dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
-    resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
-  }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
   res.json(resultados.slice(-50).reverse().map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
@@ -178,45 +177,32 @@ app.get('/api/autocomplete', (req, res) => {
     
     // Filtrar por Categoria
     if (c !== 'todas') {
-      const isEsportes = c.startsWith('esportes');
-      const sub = c.includes('_') ? c.split('_')[1] : '';
-      
-      // Obter domínios válidos para esta categoria
       const { lojas } = require('./scraper');
       const flattenGroup = (group) => {
         let arr = [];
         for (let key in group) {
-          if (Array.isArray(group[key])) {
-            arr = arr.concat(group[key]);
-          } else if (typeof group[key] === 'object') {
-            arr = arr.concat(flattenGroup(group[key]));
-          }
+          if (Array.isArray(group[key])) arr.push(...group[key]);
+          else if (typeof group[key] === 'object') arr = arr.concat(flattenGroup(group[key]));
         }
         return arr;
       };
-      
       let dominiosValidos = [];
-      if (isEsportes) {
-        if (sub && lojas.esportes[sub]) {
-          dominiosValidos = flattenGroup({ a: lojas.esportes[sub] });
-        } else {
-          dominiosValidos = flattenGroup(lojas.esportes);
-        }
-      } else {
-        if (sub && lojas.marcas[sub]) {
-          dominiosValidos = flattenGroup({ a: lojas.marcas[sub] });
-        } else {
-          dominiosValidos = flattenGroup(lojas.marcas);
-        }
+      if (c === 'esportes') {
+        dominiosValidos = flattenGroup(lojas.esportes);
+      } else if (c.startsWith('esportes_') && lojas.esportes[c.split('_')[1]]) {
+        dominiosValidos = lojas.esportes[c.split('_')[1]];
+      } else if (lojas[c]) {
+        dominiosValidos = flattenGroup(lojas[c]);
+      } else if (c.includes('_') && lojas[c.split('_')[0]]) {
+        dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
       }
-      
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
       resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
     }
     
     // Filtro de Busca Multilingue Inteligente
     if (query) {
-      const keywords = query.split(' ').filter(k => k.length > 1);
+      const stopWords = ['de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'em', 'um', 'uma']; const keywords = query.split(' ').filter(k => k.length > 1 && !stopWords.includes(k));
       
       let translatedKeywords = [];
       try {
@@ -274,3 +260,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log('Servidor rodando na porta ' + PORT);
 });
+
+

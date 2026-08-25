@@ -15,31 +15,25 @@ const lojas = {
       "https://football-allyuanyan.x.yupoo.com",
       "https://qiumishijie.x.yupoo.com",
       "https://1215795243.x.yupoo.com",
-      "https://1215795243.x.zhidian-inc.cn",
       "https://3179704378.x.yupoo.com",
       "https://407131796.x.yupoo.com",
       "https://8618320710438.x.yupoo.com",
-      "https://8618320710438.x.zhidian-inc.cn"
     ],
     basquete: [
       "https://xingkong-sports.x.yupoo.com",
-      "https://xingkong-sports.x.zhidian-inc.cn",
       "https://chenzhefuzhuang.x.yupoo.com",
-      "https://chenzhefuzhuang.x.zhidian-inc.cn"
     ],
     automobilismo: [
       "https://yiyisports2016.x.yupoo.com"
     ],
     futebol_americano: [
       "https://chenzhefuzhuang.x.yupoo.com",
-      "https://chenzhefuzhuang.x.zhidian-inc.cn"
     ],
     rugby: [
       "https://yiyisports2016.x.yupoo.com"
     ],
     beisebol: [
       "https://chenzhefuzhuang.x.yupoo.com",
-      "https://chenzhefuzhuang.x.zhidian-inc.cn"
     ]
   },
   luxo: {
@@ -47,7 +41,6 @@ const lojas = {
       "https://vipno1.x.yupoo.com",
       "https://gaoduan001.x.yupoo.com",
       "https://chenzhefuzhuang.x.yupoo.com",
-      "https://chenzhefuzhuang.x.zhidian-inc.cn",
       "https://sanguomaoye666.x.yupoo.com",
       "https://yehecheng.x.yupoo.com",
       "https://ywq2000.x.yupoo.com",
@@ -62,7 +55,6 @@ const lojas = {
       "https://aowei2022.x.yupoo.com",
       "https://ax6789.x.yupoo.com",
       "https://huandong123.x.yupoo.com",
-      "https://huandong123.x.zhidian-inc.cn",
       "https://huang456852.x.yupoo.com",
       "https://pp111115555.x.yupoo.com",
       "https://sf0594888.x.yupoo.com",
