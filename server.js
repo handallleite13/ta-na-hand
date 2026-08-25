@@ -93,16 +93,28 @@ function traduzirTitulo(tituloOriginal) {
 
 // Endpoint de Autocomplete Rápido
 app.get('/api/autocomplete', (req, res) => {
-  const query = req.query.q || '';
-  if (!query || query.length < 3) return res.json([]);
-  
-  const termo = query.toLowerCase();
-  const resultados = globalCache.filter(item => 
-    item.titulo.toLowerCase().includes(termo) || 
-    item.original.toLowerCase().includes(termo)
-  ).slice(0, 50); // Retorna no máximo 50 para ser instantâneo
-  
-  res.json(resultados.map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
+    const query = req.query.q || '';
+    if (!query || query.length < 3) return res.json([]);
+    const termo = query.toLowerCase();
+    
+    let database = [];
+    try {
+      const fsReq = require('fs');
+      const pathReq = require('path');
+      const files = fsReq.readdirSync(__dirname);
+      const catFiles = files.filter(f => f.startsWith('catalogo') && f.endsWith('.json'));
+      for (let f of catFiles) {
+        const filePath = pathReq.join(__dirname, f);
+        const data = JSON.parse(fsReq.readFileSync(filePath, 'utf8'));
+        database = database.concat(data);
+      }
+    } catch(e) {}
+
+    const resultados = database.filter(item => 
+      (item.titulo || '').toLowerCase().includes(termo)
+    ).slice(0, 50);
+    
+    res.json(resultados.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
   });
 
   app.get('/api/latest', (req, res) => {
@@ -153,7 +165,7 @@ app.get('/api/autocomplete', (req, res) => {
     }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
-  res.json(resultados.slice(-50).reverse().map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
+  res.json(resultados.slice(-50).reverse().map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
 });
 
   app.get('/api/search', async (req, res) => {
@@ -175,30 +187,7 @@ app.get('/api/autocomplete', (req, res) => {
   
     let resultados = database;
     
-    // Filtrar por Categoria
-    if (c !== 'todas') {
-      const { lojas } = require('./scraper');
-      const flattenGroup = (group) => {
-        let arr = [];
-        for (let key in group) {
-          if (Array.isArray(group[key])) arr.push(...group[key]);
-          else if (typeof group[key] === 'object') arr = arr.concat(flattenGroup(group[key]));
-        }
-        return arr;
-      };
-      let dominiosValidos = [];
-      if (c === 'esportes') {
-        dominiosValidos = flattenGroup(lojas.esportes);
-      } else if (c.startsWith('esportes_') && lojas.esportes[c.split('_')[1]]) {
-        dominiosValidos = lojas.esportes[c.split('_')[1]];
-      } else if (lojas[c]) {
-        dominiosValidos = flattenGroup(lojas[c]);
-      } else if (c.includes('_') && lojas[c.split('_')[0]]) {
-        dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
-      }
-      dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
-      resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
-    }
+    // Busca global ignorando categoria conforme pedido
     
     // Filtro de Busca Multilingue Inteligente
     if (query) {
@@ -232,7 +221,7 @@ app.get('/api/autocomplete', (req, res) => {
       });
     }
     
-    res.json(resultados.map(i => ({...i, titulo: traduzirTitulo(i.titulo)})));
+    res.json(resultados.slice(0, 300).map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
   });
 
   app.get('/api/image', (req, res) => {
