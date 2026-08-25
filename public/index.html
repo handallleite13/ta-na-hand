@@ -146,7 +146,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.39</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.40</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -667,9 +667,9 @@
       cartContainer.classList.add('hidden');
       
       let category = document.getElementById('category').value;
-      if (category === 'esportes') {
+      if (!document.getElementById('sub-category-wrapper').classList.contains('hidden')) {
         const sub = document.getElementById('sub-category').value;
-        if (sub && sub !== 'geral') category = 'esportes_' + sub;
+        if (sub && sub !== 'geral') category = category + '_' + sub;
       }
 
       container.classList.remove('hidden');
