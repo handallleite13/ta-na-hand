@@ -171,7 +171,7 @@ app.get('/api/autocomplete', (req, res) => {
         return arr;
       };
       let dominiosValidos = [];
-      if (c.startsWith('esportes') || c === 'fitness' || c === 'bolsas') {
+      if (c.startsWith('esportes') || c.startsWith('fitness') || c === 'bolsas') {
           dominiosValidos = flattenGroup(lojas.esportes);
         } else if (lojas[c]) {
           dominiosValidos = flattenGroup(lojas[c]);
@@ -224,19 +224,51 @@ app.get('/api/autocomplete', (req, res) => {
               resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports));
            }
         }
-        // --- NEW: FITNESS CATEGORY ---
-        if (c === 'fitness') {
+        // --- FITNESS CATEGORIES ---
+        if (c && c.startsWith('fitness')) {
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
-              return t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(bagsRegex);
+              
+              // Base exclusion for all fitness
+              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
+                  return false;
+              }
+
+              if (c === 'fitness_compressao') {
+                  return t.match(/segunda pele|compress|紧身|pro|under armour/i);
+              }
+              if (c === 'fitness_corrida') {
+                  return t.match(/running|corrida|跑步|慢跑/i);
+              }
+              if (c === 'fitness_ciclismo') {
+                  return t.match(/ciclismo|cycling|骑行|自行车/i);
+              }
+              
+              return true; // c === 'fitness_geral' or just 'fitness'
            });
         }
 
-        // --- NEW: FITNESS CATEGORY ---
-        if (c === 'fitness') {
+        // --- FITNESS CATEGORIES ---
+        if (c && c.startsWith('fitness')) {
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
-              return t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(bagsRegex);
+              
+              // Base exclusion for all fitness
+              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
+                  return false;
+              }
+
+              if (c === 'fitness_compressao') {
+                  return t.match(/segunda pele|compress|紧身|pro|under armour/i);
+              }
+              if (c === 'fitness_corrida') {
+                  return t.match(/running|corrida|跑步|慢跑/i);
+              }
+              if (c === 'fitness_ciclismo') {
+                  return t.match(/ciclismo|cycling|骑行|自行车/i);
+              }
+              
+              return true; // c === 'fitness_geral' or just 'fitness'
            });
         }
 
