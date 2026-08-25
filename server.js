@@ -1,9 +1,12 @@
 const express = require('express');
 
+
+const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
+
 const sportKeywords = {
-  basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball/i,
-  futebol_americano: /nfl|chiefs|eagles|patriots|ravens|49ers|packers|cowboys|steelers|dolphins|broncos|raiders|seahawks|buccaneers|橄榄球|super bowl/i,
-  beisebol: /mlb|baseball|yankees|dodgers|red sox|braves|astros|cubs|mets|padres|phillies|rangers|棒球/i,
+  basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball|jordan|湖人|勇士|公牛|凯尔特人|热火|尼克斯|篮网|独行侠|太阳|雄鹿|76人|掘金/i,
+  futebol_americano: /nfl|chiefs|eagles|patriots|ravens|49ers|packers|cowboys|steelers|dolphins|broncos|raiders|seahawks|buccaneers|橄榄球|super bowl|海鹰|包装工|49人|野马|突袭者|酋长|老鹰|爱国者|乌鸦|牛仔|钢人|海豚|海盗/i,
+  beisebol: /mlb|baseball|yankees|dodgers|red sox|braves|astros|cubs|mets|padres|phillies|rangers|棒球|扬基|道奇|红袜|勇士|太空人|小熊|大都会|教士|费城人|游骑兵/i,
   automobilismo: /\bf1\b|formula 1|formula one|racing|ferrari|mercedes|red\s?bull|mclaren|aston martin|porsche|bmw motorsport|amg|petronas|nascar|motogp|yamaha|车队|赛车/i,
   rugby: /rugby|sevens|all blacks?|sydney rooster|nrl|brumbies|crusaders|hurricanes/i
 };
@@ -161,7 +164,7 @@ app.get('/api/autocomplete', (req, res) => {
         return arr;
       };
       let dominiosValidos = [];
-      if (c.startsWith('esportes') || c === 'fitness') {
+      if (c.startsWith('esportes') || c === 'fitness' || c === 'bolsas') {
           dominiosValidos = flattenGroup(lojas.esportes);
         } else if (lojas[c]) {
           dominiosValidos = flattenGroup(lojas[c]);
@@ -178,6 +181,15 @@ app.get('/api/autocomplete', (req, res) => {
         }
 
         // --- NEW: ESPORTES KEYWORD FILTERING ---
+        
+        // --- NEW: BOLSAS CATEGORY ---
+        if (c === 'bolsas') {
+           resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(bagsRegex));
+        } else if (c !== 'todas') {
+           // Exclude bags from all other categories globally
+           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(bagsRegex));
+        }
+
         if (c.startsWith('esportes_')) {
            const sub = c.replace('esportes_', '');
            if (sportKeywords[sub]) {
@@ -189,21 +201,21 @@ app.get('/api/autocomplete', (req, res) => {
         }
         // --- NEW: FITNESS CATEGORY ---
         if (c === 'fitness') {
-           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身/i;
-           const teamTrainingRegex = /tracksuit|survetement|chandal|tuta|训练|套装|出场服|nba|nfl|mlb|f1|racing|ferrari|mercedes|red\s?bull|mclaren|porsche|rugby|all black|库里|飞人|男篮/i;
+           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤/i;
+           const teamTrainingRegex = new RegExp('tracksuit|survetement|chandal|tuta|出场服|madrid|barcelona|psg|munich|united|city|arsenal|chelsea|liverpool|juventus|milan|inter|spurs|tottenham|ajax|boca|river plate|flamengo|corinthians|palmeiras|sao paulo|gremio|cruzeiro|atletico|vasco|fluminense|botafogo|巴黎|皇马|巴塞|拜仁|曼城|曼联|阿森纳|切尔西|利物浦|尤文|米兰|马竞|多特|国米|罗马|' + Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
-              return t.match(fitnessRegex) && !t.match(teamTrainingRegex);
+              return t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(bagsRegex);
            });
         }
 
         // --- NEW: FITNESS CATEGORY ---
         if (c === 'fitness') {
-           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身/i;
-           const teamTrainingRegex = /tracksuit|survetement|chandal|tuta|训练|套装|出场服|nba|nfl|mlb|f1|racing|ferrari|mercedes|red\s?bull|mclaren|porsche|rugby|all black|库里|飞人|男篮/i;
+           const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤/i;
+           const teamTrainingRegex = new RegExp('tracksuit|survetement|chandal|tuta|出场服|madrid|barcelona|psg|munich|united|city|arsenal|chelsea|liverpool|juventus|milan|inter|spurs|tottenham|ajax|boca|river plate|flamengo|corinthians|palmeiras|sao paulo|gremio|cruzeiro|atletico|vasco|fluminense|botafogo|巴黎|皇马|巴塞|拜仁|曼城|曼联|阿森纳|切尔西|利物浦|尤文|米兰|马竞|多特|国米|罗马|' + Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
-              return t.match(fitnessRegex) && !t.match(teamTrainingRegex);
+              return t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(bagsRegex);
            });
         }
 
@@ -381,7 +393,7 @@ app.get('/api/autocomplete', (req, res) => {
         
         let targetDomains = [];
         const parts = c.split('_');
-        if ((parts[0] === 'esportes' || parts[0] === 'fitness') && lojas.esportes) {
+        if ((parts[0] === 'esportes' || parts[0] === 'fitness' || parts[0] === 'bolsas') && lojas.esportes) {
                 targetDomains = flattenGroup(lojas.esportes);
              } else if (parts.length === 1 && lojas[parts[0]]) {
                 targetDomains = flattenGroup(lojas[parts[0]]);
@@ -414,6 +426,14 @@ app.get('/api/autocomplete', (req, res) => {
         }
         
         // --- NEW: ESPORTES STRICT KEYWORD FILTERING FOR SEARCH ---
+        
+        // --- NEW: BOLSAS CATEGORY FOR SEARCH ---
+        if (c === 'bolsas') {
+           resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(bagsRegex));
+        } else if (c !== 'todas') {
+           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(bagsRegex));
+        }
+
         if (c && c.startsWith('esportes_')) {
            const sub = c.replace('esportes_', '');
            if (sportKeywords[sub]) {
