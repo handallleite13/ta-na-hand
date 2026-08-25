@@ -369,23 +369,6 @@
       `).join('');
     }
 
-    // Update addToCart to update favs modal if open
-    const originalAddToCart = addToCart;
-    addToCart = function(id, link, titulo, img) {
-      originalAddToCart(id, link, titulo, img);
-      if (!document.getElementById('modal-favs').classList.contains('hidden')) {
-        renderFavsModal();
-      }
-    };
-
-    const originalToggleFav = toggleFav;
-    toggleFav = function(id, link) {
-      originalToggleFav(id, link);
-      if (!document.getElementById('modal-favs').classList.contains('hidden')) {
-        renderFavsModal();
-      }
-    };
-
     // Toggle Carrinho
     document.getElementById('btn-toggle-cart').addEventListener('click', () => {
       document.getElementById('modal-cart').classList.remove('hidden');
@@ -408,6 +391,10 @@
       localStorage.setItem('tnh_favs', JSON.stringify(favorites));
       updateCounts();
       
+      
+      if (!document.getElementById('modal-favs').classList.contains('hidden')) {
+        renderFavsModal();
+      }
       if (showingFavorites) applyFiltersAndRender(favorites);
       else if (!showingCart) applyFiltersAndRender(allResults);
     };
@@ -431,6 +418,10 @@
       localStorage.setItem('tnh_cart', JSON.stringify(cart));
       updateCounts();
       
+      
+      if (!document.getElementById('modal-favs').classList.contains('hidden')) {
+        renderFavsModal();
+      }
       // Reset select feedback
       if(select) select.value = "";
       alert("✅ Adicionado ao carrinho!");
