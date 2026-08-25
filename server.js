@@ -3,7 +3,7 @@ const express = require('express');
 
 const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
 const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
-const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤/i;
+const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤|pro\\b|combat|打底|dri-fit|segunda pele|compression|compressão|base layer/i;
 
 
 const sportKeywords = {
@@ -160,7 +160,7 @@ app.get('/api/autocomplete', (req, res) => {
   let resultados = database;
   
   // Filtrar por Categoria igual na busca
-  if (c !== 'todas') {
+  if (c !== 'todas' && !c.startsWith('fitness')) {
       const { lojas } = require('./scraper');
       const flattenGroup = (group) => {
         let arr = [];
@@ -171,7 +171,7 @@ app.get('/api/autocomplete', (req, res) => {
         return arr;
       };
       let dominiosValidos = [];
-      if (c.startsWith('esportes') || c.startsWith('fitness') || c === 'bolsas') {
+      if (c.startsWith('esportes') || c === 'bolsas') {
           dominiosValidos = flattenGroup(lojas.esportes);
         } else if (lojas[c]) {
           dominiosValidos = flattenGroup(lojas[c]);
@@ -230,12 +230,18 @@ app.get('/api/autocomplete', (req, res) => {
               const t = (item.titulo || '').toLowerCase();
               
               // Base exclusion for all fitness
+              
+              // BLINDAGEM: Block domains that are strictly team sports so their generic 'Shorts' and 'Regatas' don't leak into Fitness
+              const blockedSportsDomains = ['chenzhefuzhuang', 'xingkong-sports', 'football-all', 'qiumishijie', '8618320710438', 'changjiangsports', 'dongshanstore', 'feitengsports', '007007haoyuntiyu', '1215795243', '3179704378', 'yiyisports2016'];
+              if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+
+              // Base exclusion
               if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
                   return false;
               }
 
               if (c === 'fitness_compressao') {
-                  return t.match(/segunda pele|compress|紧身|pro|under armour/i);
+                  return t.match(/segunda pele|compress|紧身|速干|打底|pro|under armour/i);
               }
               if (c === 'fitness_corrida') {
                   return t.match(/running|corrida|跑步|慢跑/i);
@@ -254,12 +260,18 @@ app.get('/api/autocomplete', (req, res) => {
               const t = (item.titulo || '').toLowerCase();
               
               // Base exclusion for all fitness
+              
+              // BLINDAGEM: Block domains that are strictly team sports so their generic 'Shorts' and 'Regatas' don't leak into Fitness
+              const blockedSportsDomains = ['chenzhefuzhuang', 'xingkong-sports', 'football-all', 'qiumishijie', '8618320710438', 'changjiangsports', 'dongshanstore', 'feitengsports', '007007haoyuntiyu', '1215795243', '3179704378', 'yiyisports2016'];
+              if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+
+              // Base exclusion
               if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
                   return false;
               }
 
               if (c === 'fitness_compressao') {
-                  return t.match(/segunda pele|compress|紧身|pro|under armour/i);
+                  return t.match(/segunda pele|compress|紧身|速干|打底|pro|under armour/i);
               }
               if (c === 'fitness_corrida') {
                   return t.match(/running|corrida|跑步|慢跑/i);
@@ -446,7 +458,7 @@ app.get('/api/autocomplete', (req, res) => {
         
         let targetDomains = [];
         const parts = c.split('_');
-        if ((parts[0] === 'esportes' || parts[0] === 'fitness' || parts[0] === 'bolsas') && lojas.esportes) {
+        if ((parts[0] === 'esportes' || parts[0] === 'bolsas') && lojas.esportes) {
                 targetDomains = flattenGroup(lojas.esportes);
              } else if (parts.length === 1 && lojas[parts[0]]) {
                 targetDomains = flattenGroup(lojas[parts[0]]);
