@@ -162,16 +162,11 @@ app.get('/api/autocomplete', (req, res) => {
       }
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
       resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
+      const chuteiraRegexLatest = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
       if (c === 'calcados_chuteiras') {
-         resultados = resultados.filter(item => {
-            const t = (item.titulo || '').toLowerCase();
-            return t.match(/fg|tf|ag|sg|ic|in|chuteira|足球鞋|football/);
-         });
+         resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
       } else if (c === 'calcados_casuais') {
-         resultados = resultados.filter(item => {
-            const t = (item.titulo || '').toLowerCase();
-            return !t.match(/fg|tf|ag|sg|ic|in|chuteira|足球鞋|football/);
-         });
+         resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
       }
     }
   
@@ -359,7 +354,19 @@ app.get('/api/autocomplete', (req, res) => {
            shoeDomains = flattenGroup(lojas.calcados);
         }
         
-        if (!c.startsWith('calcados')) {
+        if (c.startsWith('calcados')) {
+           // STRICTLY KEEP ONLY SHOES (NO CLOTHES)
+           resultados = resultados.filter(item => {
+              return shoeDomains.some(sd => (item.domain || item.link || '').includes(sd));
+           });
+           
+           const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
+           if (c === 'calcados_chuteiras') {
+              resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegex));
+           } else if (c === 'calcados_casuais') {
+              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegex));
+           }
+        } else if (c !== 'todas') {
            resultados = resultados.filter(item => {
               return !shoeDomains.some(sd => (item.domain || item.link || '').includes(sd));
            });
