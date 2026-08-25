@@ -1,4 +1,14 @@
 const express = require('express');
+
+const sportKeywords = {
+  basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball/i,
+  futebol_americano: /nfl|chiefs|eagles|patriots|ravens|49ers|packers|cowboys|steelers|dolphins|broncos|raiders|seahawks|buccaneers|橄榄球|super bowl/i,
+  beisebol: /mlb|baseball|yankees|dodgers|red sox|braves|astros|cubs|mets|padres|phillies|rangers|棒球/i,
+  automobilismo: /\bf1\b|formula 1|formula one|racing|ferrari|mercedes|red\s?bull|mclaren|aston martin|porsche|bmw motorsport|amg|petronas|nascar|motogp|yamaha|车队|赛车/i,
+  rugby: /rugby|sevens|all blacks?|sydney rooster|nrl|brumbies|crusaders|hurricanes/i
+};
+const allOtherSports = new RegExp(Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
+
 const path = require('path');
 const { Scraper } = require('./scraper');
 
@@ -151,23 +161,32 @@ app.get('/api/autocomplete', (req, res) => {
         return arr;
       };
       let dominiosValidos = [];
-      if (c === 'esportes') {
-        dominiosValidos = flattenGroup(lojas.esportes);
-      } else if (c.startsWith('esportes_') && lojas.esportes[c.split('_')[1]]) {
-        dominiosValidos = lojas.esportes[c.split('_')[1]];
-      } else if (lojas[c]) {
-        dominiosValidos = flattenGroup(lojas[c]);
-      } else if (c.includes('_') && lojas[c.split('_')[0]]) {
-        dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
-      }
+      if (c.startsWith('esportes')) {
+          dominiosValidos = flattenGroup(lojas.esportes);
+        } else if (lojas[c]) {
+          dominiosValidos = flattenGroup(lojas[c]);
+        } else if (c.includes('_') && lojas[c.split('_')[0]]) {
+          dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
+        }
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
       resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
       const chuteiraRegexLatest = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
       if (c === 'calcados_chuteiras') {
          resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
       } else if (c === 'calcados_casuais') {
-         resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
-      }
+           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegexLatest));
+        }
+
+        // --- NEW: ESPORTES KEYWORD FILTERING ---
+        if (c.startsWith('esportes_')) {
+           const sub = c.replace('esportes_', '');
+           if (sportKeywords[sub]) {
+              resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(sportKeywords[sub]));
+           } else if (sub === 'futebol') {
+              // Exclude all other sports to keep football clean
+              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports));
+           }
+        }
     }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
@@ -342,11 +361,14 @@ app.get('/api/autocomplete', (req, res) => {
         
         let targetDomains = [];
         const parts = c.split('_');
-        if (parts.length === 1 && lojas[parts[0]]) {
-           targetDomains = flattenGroup(lojas[parts[0]]);
-        } else if (parts.length === 2 && lojas[parts[0]] && lojas[parts[0]][parts[1]]) {
-           targetDomains = lojas[parts[0]][parts[1]];
-        }
+        if (parts[0] === 'esportes' && lojas.esportes) {
+                // Ignore domain-based subcategories for esportes, use ALL esportes domains
+                targetDomains = flattenGroup(lojas.esportes);
+             } else if (parts.length === 1 && lojas[parts[0]]) {
+                targetDomains = flattenGroup(lojas[parts[0]]);
+             } else if (parts.length === 2 && lojas[parts[0]] && lojas[parts[0]][parts[1]]) {
+                targetDomains = lojas[parts[0]][parts[1]];
+             }
         
         
         let shoeDomains = [];
@@ -370,6 +392,18 @@ app.get('/api/autocomplete', (req, res) => {
            resultados = resultados.filter(item => {
               return !shoeDomains.some(sd => (item.domain || item.link || '').includes(sd));
            });
+        }
+        
+        // --- NEW: ESPORTES STRICT KEYWORD FILTERING FOR SEARCH ---
+        if (c && c.startsWith('esportes_')) {
+           const sub = c.replace('esportes_', '');
+           if (sportKeywords[sub]) {
+              // Only keep items matching the specific sport keyword
+              resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(sportKeywords[sub]));
+           } else if (sub === 'futebol') {
+              // Exclude other sports
+              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports));
+           }
         }
 
         if (targetDomains.length > 0) {
