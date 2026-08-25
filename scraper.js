@@ -37,16 +37,20 @@ const lojas = {
     ]
   },
   luxo: {
-    geral: [
-      "https://vipno1.x.yupoo.com",
-      "https://gaoduan001.x.yupoo.com",
-      "https://chenzhefuzhuang.x.yupoo.com",
-      "https://sanguomaoye666.x.yupoo.com",
-      "https://yehecheng.x.yupoo.com",
-      "https://ywq2000.x.yupoo.com",
-      "https://dachang88.x.yupoo.com"
-    ]
-  },
+      geral: [
+        "https://vipno1.x.yupoo.com",
+        "https://chenzhefuzhuang.x.yupoo.com",
+        "https://sanguomaoye666.x.yupoo.com"
+      ]
+    },
+    calcados: {
+      geral: [
+        "https://gaoduan001.x.yupoo.com",
+        "https://yehecheng.x.yupoo.com",
+        "https://ywq2000.x.yupoo.com",
+        "https://dachang88.x.yupoo.com"
+      ]
+    },
   outros: {
     geral: [
       "https://599152050.x.yupoo.com",

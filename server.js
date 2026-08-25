@@ -201,6 +201,16 @@ app.get('/api/autocomplete', (req, res) => {
         // Tratamento de frases multi-palavras antes de separar por espaço
         q = q.replace(/all blacks/g, 'all_blacks');
         q = q.replace(/all black/g, 'all_black');
+        q = q.replace(/africa do sul/g, 'south_africa');
+        q = q.replace(/áfrica do sul/g, 'south_africa');
+        q = q.replace(/nova zelandia/g, 'new_zealand');
+        q = q.replace(/nova zelândia/g, 'new_zealand');
+        q = q.replace(/costa rica/g, 'costa_rica');
+        q = q.replace(/arabia saudita/g, 'saudi_arabia');
+        q = q.replace(/arábia saudita/g, 'saudi_arabia');
+        q = q.replace(/coreia do sul/g, 'south_korea');
+        q = q.replace(/estados unidos/g, 'united_states');
+        q = q.replace(/reino unido/g, 'united_kingdom');
         
         const stopWords = ['de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'em', 'um', 'uma'];
         const keywords = q.split(' ').filter(k => k.length > 1 && !stopWords.includes(k));
@@ -251,7 +261,14 @@ app.get('/api/autocomplete', (req, res) => {
           'galo': ['atletico mineiro'],
           'inter': ['internacional', 'inter milan', 'internazionale'],
           'all_blacks': ['new_zealand', 'zealand', 'all_black'],
-          'all_black': ['all_black']
+          'all_black': ['all_black'],
+          'south_africa': ['south_africa', '南非'],
+          'new_zealand': ['new_zealand', 'zealand', '新西兰'],
+          'costa_rica': ['costa_rica'],
+          'saudi_arabia': ['saudi_arabia'],
+          'south_korea': ['south_korea'],
+          'united_states': ['united_states', 'usa', 'american'],
+          'united_kingdom': ['united_kingdom', 'uk']
         };
   
         let translatedKeywords = [];
@@ -325,6 +342,18 @@ app.get('/api/autocomplete', (req, res) => {
            targetDomains = lojas[parts[0]][parts[1]];
         }
         
+        
+        let shoeDomains = [];
+        if (lojas.calcados) {
+           shoeDomains = flattenGroup(lojas.calcados);
+        }
+        
+        if (!c.startsWith('calcados')) {
+           resultados = resultados.filter(item => {
+              return !shoeDomains.some(sd => (item.domain || item.link || '').includes(sd));
+           });
+        }
+
         if (targetDomains.length > 0) {
           // Sort matched items to the end of the array, so they appear FIRST when paginated/reversed
           resultados.sort((a, b) => {
