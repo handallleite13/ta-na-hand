@@ -165,7 +165,13 @@ app.get('/api/autocomplete', (req, res) => {
     }
   
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
-  res.json(resultados.slice(-50).reverse().map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
+  
+    const page = parseInt(req.query.p) || 1;
+    const limit = 50;
+    const start = Math.max(0, resultados.length - (page * limit));
+    const end = resultados.length - ((page - 1) * limit);
+    const paginated = end > 0 ? resultados.slice(start, end).reverse() : [];
+    res.json(paginated.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
 });
 
   app.get('/api/search', async (req, res) => {
@@ -221,7 +227,14 @@ app.get('/api/autocomplete', (req, res) => {
       });
     }
     
-    res.json(resultados.slice(0, 300).map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
+    
+    const page = parseInt(req.query.p) || 1;
+    const limit = 50;
+    // We reverse search results because we want the latest scraped items first!
+    const start = Math.max(0, resultados.length - (page * limit));
+    const end = resultados.length - ((page - 1) * limit);
+    const paginated = end > 0 ? resultados.slice(start, end).reverse() : [];
+    res.json(paginated.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
   });
 
   app.get('/api/image', (req, res) => {

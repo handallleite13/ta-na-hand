@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="referrer" content="no-referrer">
-  <title>Tá Na Hand! 🇧🇷 🇨🇳</title>
+  <title>Tá Na Hand! 🇧🇷 🇨🇳 🚀 🇧🇷 🇨🇳</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
@@ -41,9 +41,9 @@
     <div class="max-w-7xl mx-auto px-4 py-16 sm:py-10 sm:px-6 lg:px-8 flex flex-col items-center">
       <!-- Written Logo -->
       <a href="/" class="block mb-8 hover:opacity-90 transition-opacity">
-        <h1 class="text-5xl font-black tracking-tighter pr-2 uppercase italic">
+        <h1 class="text-5xl font-black tracking-tighter pr-2 uppercase italic flex flex-wrap items-center gap-2">
           <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400">Tá Na Hand!</span>
-          <span class="not-italic" style="-webkit-text-fill-color: initial;">🇧🇷 🇨🇳</span>
+          <span class="not-italic text-4xl" style="-webkit-text-fill-color: initial;">🇧🇷 🇨🇳 🚀</span>
         </h1>
       </a>
 
@@ -84,7 +84,7 @@
           <input type="text" id="query" class="w-full h-14 pl-5 pr-4 bg-slate-700 border border-slate-600 text-white placeholder-slate-400 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all text-lg" placeholder="Digite e aperte Enter para buscar online...">
         </div>
         
-        <button id="btn-search" class="h-14 px-8 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+        <button id="btn-search" class="hidden h-14 px-8 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
           <span>Buscar</span>
         </button>
@@ -293,11 +293,6 @@
   <script>
     let evtSource = null;
     let allResults = [];
-      let currentPage = 1;
-      let currentEndpoint = "";
-      let isLoadingMore = false;
-      let hasMore = true;
-      let currentQuery = "";
     let currentFilter = 'all';
     
     let showingFavorites = false;
@@ -495,35 +490,84 @@
         e.target.classList.add('bg-indigo-600', 'text-white');
         
         currentFilter = e.target.getAttribute('data-filter');
-        applyFiltersAndRender(showingFavorites ? favorites : allResults, false);
+        applyFiltersAndRender(showingFavorites ? favorites : allResults);
       });
     });
 
-    function applyFiltersAndRender(dataset, append = false) {
-        let filtered = dataset;
-        if (currentFilter === 'player') {
-          filtered = dataset.filter(i => /jogador|player|球员|adv/i.test(i.titulo) || /jogador|player|球员|adv/i.test(i.original));
-        } else if (currentFilter === 'fan') {
-          filtered = dataset.filter(i => /torcedor|fan|球迷/i.test(i.titulo) || /torcedor|fan|球迷/i.test(i.original));
-        } else if (currentFilter === 'infantil') {
-          filtered = dataset.filter(i => /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.titulo) || /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
-        } else if (currentFilter === 'feminino') {
-          filtered = dataset.filter(i => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.titulo) || /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original));
-        } else if (currentFilter === 'masculino') {
-          filtered = dataset.filter(i => !/women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original) && !/kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
-        }
-        
-        let htmlString = '';
-        filtered.forEach(item => {
-          htmlString += renderItem(item);
-        });
-        
-        if (append) {
-          list.insertAdjacentHTML('beforeend', htmlString);
-        } else {
-          list.innerHTML = htmlString;
-        }
+    function applyFiltersAndRender(dataset) {
+      let filtered = dataset;
+      if (currentFilter === 'player') {
+        filtered = dataset.filter(i => /jogador|player|球员|adv/i.test(i.titulo) || /jogador|player|球员|adv/i.test(i.original));
+      } else if (currentFilter === 'fan') {
+        filtered = dataset.filter(i => /torcedor|fan|球迷/i.test(i.titulo) || /torcedor|fan|球迷/i.test(i.original));
+      } else if (currentFilter === 'infantil') {
+        filtered = dataset.filter(i => /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.titulo) || /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
+      } else if (currentFilter === 'feminino') {
+        filtered = dataset.filter(i => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.titulo) || /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original));
+      } else if (currentFilter === 'masculino') {
+        // Masculino is basically NOT feminino and NOT infantil
+        filtered = dataset.filter(i => !/women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original) && !/kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
       }
+      renderAll(filtered);
+    }
+
+    function renderItem(item) {
+      const isFav = favorites.find(f => f.link === item.link);
+      const heartColor = isFav ? "text-rose-500" : "text-white/70 hover:text-white";
+      const heartFill = isFav ? "currentColor" : "none";
+      
+      const proxyCapa = (item.capa || item.img) ? `/api/image?url=${encodeURIComponent(item.capa || item.img)}&ref=${encodeURIComponent(item.link)}` : '';
+      const capaImg = (item.capa || item.img) ? `<img src="${proxyCapa}" class="w-full aspect-square object-cover bg-slate-800 group-hover:scale-105 transition-transform duration-500" loading="lazy">` : `<div class="w-full aspect-square bg-slate-800 flex items-center justify-center text-slate-500 text-sm font-medium">Sem Imagem</div>`;
+      
+      const domId = item.id || btoa(item.link).replace(/[^a-zA-Z0-9]/g, '');
+
+      return `
+        <div class="bg-slate-800 rounded-2xl shadow-md hover:shadow-xl border border-slate-700 overflow-hidden flex flex-col group fade-in transition-all relative pb-2">
+          
+          <button onclick="toggleFav('${item.link}', event)" class="absolute top-2 right-2 z-10 p-2 rounded-full bg-black/30 backdrop-blur-sm ${heartColor} transition-colors">
+            <svg class="w-5 h-5" fill="${heartFill}" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+          </button>
+
+          <a href="${item.link}" target="_blank" class="relative overflow-hidden block shrink-0">
+            ${capaImg}
+            <div class="absolute inset-0 bg-white/0 group-hover:bg-white/5 transition-colors"></div>
+          </a>
+          
+          <div class="p-4 pb-2 flex flex-col flex-1">
+            <a href="${item.link}" target="_blank" class="group-hover:text-indigo-400 transition-colors">
+              <h3 class="font-bold text-white text-sm leading-tight line-clamp-2 mb-1" title="${item.titulo}">${item.titulo}</h3>
+            </a>
+            
+            <div class="mt-auto pt-3 flex flex-col gap-2 border-t border-slate-700/50">
+              <select id="size-${domId}" class="w-full bg-slate-700 border border-slate-600 text-white rounded-lg p-2 text-xs font-medium focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                <option value="">Escolha o Tamanho</option>
+                <option value="PP">PP</option>
+                <option value="P">P</option>
+                <option value="M">M</option>
+                <option value="G">G</option>
+                <option value="GG">GG</option>
+              </select>
+              
+              <button onclick="addToCart('${item.link}')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg transition-colors text-xs flex items-center justify-center gap-1 shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                Pôr no Carrinho
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderAll(results) {
+      list.innerHTML = '';
+      if (results.length === 0) {
+        list.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-lg">Nenhum catálogo encontrado.</div>';
+        return;
+      }
+      results.forEach(item => {
+        list.innerHTML += renderItem(item);
+      });
+    }
 
     // Busca ao vivo (Autocomplete)
     let typingTimer;
@@ -537,7 +581,7 @@
       clearTimeout(typingTimer);
       typingTimer = setTimeout(async () => {
         const query = e.target.value.trim();
-        if (showingFavorites || showingCart) return;
+        if (showingFavorites || showingCart || document.getElementById('btn-search').classList.contains('hidden')) return;
         
         if (query.length >= 3) {
           try {
@@ -577,16 +621,7 @@
       }
     });
 
-    async function fetchLatestAndRender(isLoadMore = false) {
-      if (!isLoadMore) {
-        currentPage = 1;
-        hasMore = true;
-        allResults = [];
-        list.innerHTML = '';
-        currentEndpoint = 'latest';
-      }
-      if (!hasMore || isLoadingMore) return;
-      isLoadingMore = true;
+    async function fetchLatestAndRender() {
       showingFavorites = false;
       showingCart = false;
       cartContainer.classList.add('hidden');
@@ -594,32 +629,30 @@
       let category = document.getElementById('category').value;
       if (category === 'esportes') {
         const sub = document.getElementById('sub-category').value;
-        if (sub && sub !== 'geral') category = 'esportes_' + sub;
+        if (sub && sub !== 'geral') {
+          category = 'esportes_' + sub;
+        }
       }
 
       container.classList.remove('hidden');
       document.getElementById('results-title').innerText = "Últimos Lançamentos";
       document.getElementById('search-spinner').classList.remove('hidden');
-      document.getElementById('bottom-status').classList.add('hidden');
-
+      document.getElementById('bottom-status').classList.add('hidden'); // Esconde o contador
+      
       try {
-        const res = await fetch(`/api/latest?c=${encodeURIComponent(category)}&p=${currentPage}`);
+        const res = await fetch(`/api/latest?c=${encodeURIComponent(category)}`);
         const data = await res.json();
+        
         document.getElementById('search-spinner').classList.add('hidden');
-        
-        if (data.length < 50) hasMore = false;
-        
         if (data && data.length > 0) {
-          allResults = allResults.concat(data);
-          applyFiltersAndRender(data, isLoadMore);
-          currentPage++;
-        } else if (!isLoadMore) {
-          list.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-lg">Nenhum catálogo encontrado.</div>';
+          allResults = data;
+          applyFiltersAndRender(allResults);
+        } else {
+          document.getElementById('results-list').innerHTML = ''; // Não avisa nada, apenas fica vazio enquanto carrega no back
         }
       } catch (e) {
         document.getElementById('search-spinner').classList.add('hidden');
       }
-      isLoadingMore = false;
     }
     
     // Auto-carrega ao abrir o site
@@ -628,65 +661,48 @@
     });
 
     // Busca Real (SSE)
-    async function executeSearch(isLoadMore = false) {
-      if (!isLoadMore) {
-        currentPage = 1;
-        hasMore = true;
-        allResults = [];
-        list.innerHTML = '';
-        currentEndpoint = 'search';
-        currentQuery = document.getElementById('query').value.trim();
-        
-        document.getElementById('stat-encontrados').innerText = '0';
-        document.getElementById('results-title').innerText = currentQuery ? "Resultados" : "Últimos Lançamentos";
-        container.classList.remove('hidden');
-      }
-      
-      if (!hasMore || isLoadingMore) return;
-      isLoadingMore = true;
+    document.getElementById('btn-search').addEventListener('click', async () => {
       showingFavorites = false;
       showingCart = false;
       cartContainer.classList.add('hidden');
       
+      const query = document.getElementById('query').value.trim();
+      let category = document.getElementById('category').value;
+      
+      if (category === 'esportes') {
+        const sub = document.getElementById('sub-category').value;
+        if (sub && sub !== 'geral') {
+          category = 'esportes_' + sub;
+        }
+      }
+
       document.getElementById('search-spinner').classList.remove('hidden');
       document.getElementById('bottom-status').classList.remove('hidden');
+      document.getElementById('stat-encontrados').innerText = '0';
+      document.getElementById('results-title').innerText = query ? "Resultados" : "Últimos Lançamentos";
+      document.getElementById('results-list').innerHTML = '';
+      container.classList.remove('hidden');
+
+      allResults = [];
 
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&p=${currentPage}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}&c=${encodeURIComponent(category)}`);
         const data = await res.json();
         
-        if (data.length < 50) hasMore = false;
+        allResults = data;
+        document.getElementById('stat-encontrados').innerText = allResults.length;
         
-        if (data && data.length > 0) {
-          allResults = allResults.concat(data);
-          document.getElementById('stat-encontrados').innerText = allResults.length;
-          applyFiltersAndRender(data, isLoadMore);
-          currentPage++;
-        } else if (!isLoadMore) {
-          list.innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-lg">Nenhum resultado encontrado no catálogo local.</div>';
+        if (allResults.length > 0) {
+          applyFiltersAndRender(allResults);
+        } else {
+          document.getElementById('results-list').innerHTML = '<div class="col-span-full py-12 text-center text-slate-500 text-lg">Nenhum resultado encontrado no catálogo local.</div>';
         }
       } catch (e) {
         console.error(e);
       } finally {
         document.getElementById('search-spinner').classList.add('hidden');
       }
-      isLoadingMore = false;
-    }
-
-    document.getElementById('btn-search').addEventListener('click', () => {
-      executeSearch(false);
     });
-
-    window.addEventListener('scroll', () => {
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 800) {
-        if (currentEndpoint === 'latest') {
-          fetchLatestAndRender(true);
-        } else if (currentEndpoint === 'search') {
-          executeSearch(true);
-        }
-      }
-    });
-
 
     // Remove btn-stop as it's no longer needed for instant searches
     // We can just leave the empty function to avoid breaking HTML
@@ -700,6 +716,4 @@
   </script>
 </body>
 </html>
-
-
 
