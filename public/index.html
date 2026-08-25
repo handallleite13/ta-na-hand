@@ -146,7 +146,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.37</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.38</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -726,8 +726,14 @@
       document.getElementById('search-spinner').classList.remove('hidden');
       document.getElementById('bottom-status').classList.remove('hidden');
 
+      let category = document.getElementById('category').value;
+      if (!document.getElementById('sub-category-wrapper').classList.contains('hidden')) {
+        const sub = document.getElementById('sub-category').value;
+        if (sub && sub !== 'geral') category = category + '_' + sub;
+      }
+
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&p=${currentPage}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&c=${category}&p=${currentPage}`);
         const data = await res.json();
         
         if (data.length < 50) hasMore = false;
