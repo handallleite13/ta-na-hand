@@ -197,7 +197,14 @@ app.get('/api/autocomplete', (req, res) => {
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
             resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
       // GLOBAL: Remove Size Charts
-      resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(/尺码|size chart|tabela de tamanho|tamanho recomendado|尺码表/));
+      resultados = resultados.filter(item => {
+        const t = (item.titulo || '').toLowerCase();
+        // GLOBAL BLOCKS: Size charts, links to albums (not actual items), and the specific NBA generic size chart title
+        if (t === 'nba篮球球衣') return false;
+        if (t.match(/尺码|size chart|tabela de tamanho|tamanho recomendado|尺码表|size table|size guide|measurements/i)) return false;
+        if (t.match(/álbum de treinamento|album link|image link|catalog link|patch accessories|link do álbum/i)) return false;
+        return true;
+      });
             if (c === 'calcados_chuteiras') {
          resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegex) && !(item.titulo || '').toLowerCase().match(/meia|meião|sock|leg guard|shin guard|护腿板|袜子/));
       } else if (c === 'calcados_casuais') {
