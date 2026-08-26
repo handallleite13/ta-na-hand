@@ -158,7 +158,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.53</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.54</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -643,6 +643,15 @@
           <option value="futebol_americano">Fut. Americano</option>
           <option value="rugby">Rugby</option>
             <option value="outros">Outros Esportes</option>
+        `;
+        sub.classList.remove('hidden');
+      } else if (cat === 'luxo') {
+        document.getElementById('btn-treino').classList.add('hidden');
+        if (typeof currentFilter !== 'undefined' && currentFilter === 'treino') document.querySelector('[data-filter="all"]').click();
+        subSelect.innerHTML = `
+          <option value="geral">Geral (Tudo)</option>
+          <option value="sneakers">Sneakers (Tênis)</option>
+          <option value="roupas">Roupas</option>
         `;
         sub.classList.remove('hidden');
       } else if (cat === 'calcados') {

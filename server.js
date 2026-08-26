@@ -215,8 +215,17 @@ app.get('/api/autocomplete', (req, res) => {
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
               if (c === 'luxo' || c.startsWith('luxo_')) {
-                  // For luxo, MUST contain luxury brand, and MUST NOT be a bag or shoe
-                  return t.match(luxuryBrands) && !t.match(bagsRegex) && !t.match(chuteiraRegex);
+                  if (!t.match(luxuryBrands) || t.match(bagsRegex)) return false;
+                  
+                  const isSneaker = t.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
+                  
+                  if (c === 'luxo_sneakers') {
+                      return isSneaker;
+                  } else if (c === 'luxo_roupas') {
+                      return !isSneaker && !t.match(chuteiraRegex);
+                  }
+                  
+                  return !t.match(chuteiraRegex); // Geral keeps everything except bags/cleats
               } else {
                   // For outros_, just exclude everything
                   return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(globalSportsRegex) && !t.match(sportsBrandsRegex);
@@ -253,7 +262,8 @@ app.get('/api/autocomplete', (req, res) => {
            } else if (sub === 'futebol') {
               // Exclude all other sports to keep football clean
               const luxuryBrands = /gucci|prada|louis vuitton|\blv\b|balenciaga|dior|burberry|versace|fendi|amiri|givenchy|chanel|hermes|rolex|古驰|普拉达|路易威登|巴黎世家|迪奥|博柏利|范思哲|芬迪/i;
-              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports) && !(item.titulo || '').toLowerCase().match(luxuryBrands));
+              const dressShirts = /衬衫|social|dress shirt|camisa social|suit|西装|西服|blazer/i;
+              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports) && !(item.titulo || '').toLowerCase().match(luxuryBrands) && !(item.titulo || '').toLowerCase().match(dressShirts));
            }
         }
         // --- FITNESS CATEGORIES ---
@@ -558,7 +568,8 @@ app.get('/api/autocomplete', (req, res) => {
            } else if (sub === 'futebol') {
               // Exclude other sports
               const luxuryBrands = /gucci|prada|louis vuitton|\blv\b|balenciaga|dior|burberry|versace|fendi|amiri|givenchy|chanel|hermes|rolex|古驰|普拉达|路易威登|巴黎世家|迪奥|博柏利|范思哲|芬迪/i;
-              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports) && !(item.titulo || '').toLowerCase().match(luxuryBrands));
+              const dressShirts = /衬衫|social|dress shirt|camisa social|suit|西装|西服|blazer/i;
+              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports) && !(item.titulo || '').toLowerCase().match(luxuryBrands) && !(item.titulo || '').toLowerCase().match(dressShirts));
            }
         }
 
