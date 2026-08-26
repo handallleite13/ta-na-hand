@@ -8,7 +8,7 @@ const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fit
 
 const sportKeywords = {
   basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball|jordan|湖人|勇士|公牛|凯尔特人|热火|尼克斯|篮网|独行侠|太阳|雄鹿|76人|掘金|老鹰|hawks|国王|kings|火箭|rockets|马刺|spurs|猛龙|raptors|灰熊|grizzlies/i,
-  futebol_americano: /nfl|chiefs|eagles|patriots|ravens|49ers|packers|cowboys|steelers|dolphins|broncos|raiders|seahawks|buccaneers|rams|giants|bengals|jets|lions|bears|bills|texans|colts|jaguars|titans|chargers|falcons|panthers|saints|commanders|cardinals|vikings|browns|橄榄球|super bowl|海鹰|包装工|49人|野马|突袭者|酋长|爱国者|乌鸦|牛仔|钢人|海豚|海盗|公羊|巨人|孟加拉虎|喷气机|狮子|熊|比尔|德州人|小马|美洲虎|泰坦|闪电|猎鹰|黑豹|圣徒|指挥官|红雀|维京人|布朗/i,
+  futebol_americano: /nfl|chiefs|eagles|patriots|ravens|49ers|packers|cowboys|steelers|dolphins|broncos|raiders|seahawks|buccaneers|rams|giants|bengals|jets|lions|bears|bills|texans|colts|jaguars|titans|chargers|falcons|panthers|saints|commanders|cardinals|vikings|browns|橄榄球|super bowl|海鹰|包装工|49人|野马|突袭者|酋长|爱国者|乌鸦|钢人|海豚|海盗|公羊|巨人|孟加拉虎|喷气机|狮子|熊|比尔|德州人|小马|美洲虎|泰坦|闪电|猎鹰|圣徒|指挥官|红雀|维京人|布朗/i,
   beisebol: /mlb|baseball|yankees|dodgers|red sox|braves|astros|cubs|mets|padres|phillies|rangers|棒球|扬基|道奇|红袜|太空人|小熊|大都会|教士|费城人|游骑兵/i,
   automobilismo: /\bf1\b|formula 1|formula one|racing|ferrari|mercedes|red\s?bull|mclaren|aston martin|porsche|bmw motorsport|amg|petronas|nascar|motogp|yamaha|车队|赛车/i,
   rugby: /rugby|sevens|all blacks?|sydney rooster|nrl|brumbies|crusaders|hurricanes/i
@@ -114,7 +114,8 @@ function traduzirTitulo(tituloOriginal) {
 // Endpoint de Autocomplete Rápido
 app.get('/api/autocomplete', (req, res) => {
     const query = req.query.q || '';
-    if (!query || query.length < 3) return res.json([]);
+    if (!query || query.length < 3) return res.setHeader('Cache-Control', 'no-store');
+    res.json([]);
     const termo = query.toLowerCase();
     
     let database = [];
@@ -134,6 +135,7 @@ app.get('/api/autocomplete', (req, res) => {
       (item.titulo || '').toLowerCase().includes(termo)
     ).slice(0, 50);
     
+    res.setHeader('Cache-Control', 'no-store');
     res.json(resultados.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
   });
 
@@ -210,8 +212,10 @@ app.get('/api/autocomplete', (req, res) => {
         if (c === 'esportes_outros') {
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
-              // Must not match the major sports, bags, or fitness.
-              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(allOtherSports);
+              // Prevent generic football/soccer jerseys from flooding Outros
+              const genericFootballRegex = /\b\d{2}-\d{2}\b|home|away|third|player|fans|treino|regata|soccer|futebol|football|足球/i;
+              // Must not match the major sports, bags, fitness, or generic football.
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(allOtherSports) && !t.match(genericFootballRegex);
            });
         }
 
@@ -226,7 +230,11 @@ app.get('/api/autocomplete', (req, res) => {
         if (c.startsWith('esportes_')) {
            const sub = c.replace('esportes_', '');
            if (sportKeywords[sub]) {
-              resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(sportKeywords[sub]));
+              resultados = resultados.filter(item => {
+                 let t = (item.titulo || '').toLowerCase();
+                 if (sub === 'beisebol' && t.match(/nhl|new york rangers|hockey|ice hockey|冰球/i)) return false;
+                 return t.match(sportKeywords[sub]);
+              });
            } else if (sub === 'futebol') {
               // Exclude all other sports to keep football clean
               resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports));
@@ -301,6 +309,7 @@ app.get('/api/autocomplete', (req, res) => {
     const start = Math.max(0, resultados.length - (page * limit));
     const end = resultados.length - ((page - 1) * limit);
     const paginated = end > 0 ? resultados.slice(start, end).reverse() : [];
+    res.setHeader('Cache-Control', 'no-store');
     res.json(paginated.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
 });
 
@@ -553,6 +562,7 @@ app.get('/api/autocomplete', (req, res) => {
     const start = Math.max(0, resultados.length - (page * limit));
     const end = resultados.length - ((page - 1) * limit);
     const paginated = end > 0 ? resultados.slice(start, end).reverse() : [];
+    res.setHeader('Cache-Control', 'no-store');
     res.json(paginated.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
   });
 
