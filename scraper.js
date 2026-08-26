@@ -36,6 +36,8 @@ const lojas = {
   },
   luxo: {
       geral: [
+        "https://407131796.x.yupoo.com",
+        "https://3179704378.x.yupoo.com",
         "https://vipno1.x.yupoo.com",
         "https://sanguomaoye666.x.yupoo.com"
       ]
