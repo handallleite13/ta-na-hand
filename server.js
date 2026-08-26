@@ -2,15 +2,15 @@ const express = require('express');
 
 
 const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
-const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor/i;
+const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor|spike|astro|leg guard|shin guard|钉鞋|护腿板/i;
 const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤|pro\\b|combat|打底|dri-fit|segunda pele|compression|compressão|base layer/i;
 
 
 const sportKeywords = {
-  basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball|jordan|湖人|勇士|公牛|凯尔特人|热火|尼克斯|篮网|独行侠|太阳|雄鹿|76人|掘金|老鹰|hawks|国王|kings|火箭|rockets|马刺|spurs|猛龙|raptors|灰熊|grizzlies/i,
+  basquete: /nba|lakers|bulls|celtics|warriors|heat|knicks|nets|mavericks|suns|bucks|sixers|nuggets|curry|lebron|kobe|durant|篮球|basketball|jordan|湖人|勇士|公牛|凯尔特人|热火|尼克斯|篮网|独行侠|太阳|雄鹿|76人|掘金|atlanta hawks|\\bhawks\\b|国王|\\bkings\\b|火箭|rockets|马刺|spurs|猛龙|raptors|灰熊|grizzlies/i,
   futebol_americano: /nfl|chiefs|eagles|patriots|ravens|49ers|packers|cowboys|steelers|dolphins|broncos|raiders|seahawks|buccaneers|rams|giants|bengals|jets|lions|bears|bills|texans|colts|jaguars|titans|chargers|falcons|panthers|saints|commanders|cardinals|vikings|browns|橄榄球|super bowl|海鹰|包装工|49人|野马|突袭者|酋长|爱国者|乌鸦|钢人|海豚|海盗|公羊|巨人|孟加拉虎|喷气机|狮子|熊|比尔|德州人|小马|美洲虎|泰坦|闪电|猎鹰|圣徒|指挥官|红雀|维京人|布朗/i,
   beisebol: /mlb|baseball|yankees|dodgers|red sox|braves|astros|cubs|mets|padres|phillies|rangers|棒球|扬基|道奇|红袜|太空人|小熊|大都会|教士|费城人|游骑兵/i,
-  automobilismo: /\bf1\b|formula 1|formula one|racing|ferrari|mercedes|red\s?bull|mclaren|aston martin|porsche|bmw motorsport|amg|petronas|nascar|motogp|yamaha|车队|赛车/i,
+  automobilismo: /\bf1\b|formula 1|formula one|red bull racing|ferrari|mercedes|red\s?bull|mclaren|aston martin|porsche|bmw motorsport|amg|petronas|nascar|motogp|yamaha|车队|赛车/i,
   rugby: /rugby|sevens|all blacks?|sydney rooster|nrl|brumbies|crusaders|hurricanes/i
 };
 const allOtherSports = new RegExp(Object.values(sportKeywords).map(r => r.source).join('|'), 'i');
@@ -176,9 +176,12 @@ app.get('/api/autocomplete', (req, res) => {
       if (c.startsWith('esportes') || c === 'bolsas') {
         if (c === 'esportes_outros') {
             const { futebol, basquete, ...rest } = lojas.esportes;
-            dominiosValidos = flattenGroup(rest); // Prevent pure football/basketball from flooding Outros
+            dominiosValidos = flattenGroup(rest);
+        } else if (c === 'esportes' || c === 'esportes_geral' || c === 'bolsas') {
+            dominiosValidos = flattenGroup(c === 'bolsas' ? lojas.bolsas || lojas : lojas.esportes);
         } else {
-            dominiosValidos = flattenGroup(lojas.esportes);
+            const sub = c.replace('esportes_', '');
+            dominiosValidos = flattenGroup(lojas.esportes[sub] || lojas.esportes);
         }
       } else if (c.startsWith('fitness')) {
         dominiosValidos = flattenGroup(lojas); // Fitness scans all domains!
@@ -199,7 +202,7 @@ app.get('/api/autocomplete', (req, res) => {
         
         
         // --- GLOBAL ISOLATION FOR LUXO AND OUTROS ---
-        if (c.startsWith('luxo_') || c.startsWith('outros_')) {
+        if ((c === 'luxo' || c.startsWith('luxo_')) || c.startsWith('outros_')) {
            const sportsBrandsRegex = /nike|adidas|puma|converse|air jordan|jordan|vans|under armour|new balance|reebok|asics|fila|kappa|WXG-NK|WXG-AD|WXG-BM|WXG-KW/i;
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
@@ -511,7 +514,7 @@ app.get('/api/autocomplete', (req, res) => {
         
         
         // --- GLOBAL ISOLATION FOR LUXO AND OUTROS ---
-        if (c && (c.startsWith('luxo_') || c.startsWith('outros_'))) {
+        if (c && ((c === 'luxo' || c.startsWith('luxo_')) || c.startsWith('outros_'))) {
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
               return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(globalSportsRegex);
