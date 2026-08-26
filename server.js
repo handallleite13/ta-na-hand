@@ -215,7 +215,8 @@ app.get('/api/autocomplete', (req, res) => {
            resultados = resultados.filter(item => {
               const t = (item.titulo || '').toLowerCase();
               if (c === 'luxo' || c.startsWith('luxo_')) {
-                  if (!t.match(luxuryBrands) || t.match(bagsRegex)) return false;
+                  const isStrictLuxuryDomain = ['407131796', '3179704378'].some(d => item.domain && item.domain.includes(d));
+                  if ((!t.match(luxuryBrands) && !isStrictLuxuryDomain) || t.match(bagsRegex)) return false;
                   
                   const isSneaker = t.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
                   

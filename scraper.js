@@ -15,8 +15,6 @@ const lojas = {
       "https://football-allyuanyan.x.yupoo.com",
       "https://qiumishijie.x.yupoo.com",
       "https://1215795243.x.yupoo.com",
-      "https://3179704378.x.yupoo.com",
-      "https://407131796.x.yupoo.com",
       "https://8618320710438.x.yupoo.com",
     ],
     basquete: [
