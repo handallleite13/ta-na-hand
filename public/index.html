@@ -161,7 +161,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.72</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.73</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -591,14 +591,26 @@
         } else if (currentFilter === 'fan') {
           filtered = dataset.filter(i => /torcedor|fan|球迷/i.test(i.titulo) || /torcedor|fan|球迷/i.test(i.original));
         } else if (currentFilter === 'infantil') {
-          filtered = dataset.filter(i => /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.titulo) || /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
+          filtered = dataset.filter(i => {
+             const str = ((i.yupoo_category_name || '') + ' ' + (i.original || '') + ' ' + (i.titulo || '')).toLowerCase();
+             return /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(str);
+          });
         } else if (currentFilter === 'feminino') {
-          filtered = dataset.filter(i => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.titulo) || /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original) || (i.yupoo_category_name && /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.yupoo_category_name)));
+          filtered = dataset.filter(i => {
+             const str = ((i.yupoo_category_name || '') + ' ' + (i.original || '') + ' ' + (i.titulo || '')).toLowerCase();
+             return /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(str);
+          });
+        } else if (currentFilter === 'masculino') {
+          filtered = dataset.filter(i => {
+             const str = ((i.yupoo_category_name || '') + ' ' + (i.original || '') + ' ' + (i.titulo || '')).toLowerCase();
+             const isFeminino = /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(str);
+             const isInfantil = /kids|child|youth|童|infantil|menino|menina|boy\b|girl\b/i.test(str);
+             const isMasculinoExplicit = /man\b|men\b|male|男|masculino|masculina|mens|homem/i.test(str);
+             return isMasculinoExplicit || (!isFeminino && !isInfantil);
+          });
         } else if (currentFilter === 'treino') {
             filtered = dataset.filter(i => /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(i.titulo) || /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(i.original));
-          } else if (currentFilter === 'masculino') {
-          filtered = dataset.filter(i => /man\b|men\b|male|男|masculino|mens|homem/i.test(i.original));
-        }
+          
         
         let htmlString = '';
         filtered.forEach(item => {
