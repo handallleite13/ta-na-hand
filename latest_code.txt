@@ -1,0 +1,161 @@
+  app.get('/api/latest', (req, res) => {
+  const c = req.query.c || 'todas';
+    let database = [];
+    try {
+      const fsReq = require('fs');
+      const pathReq = require('path');
+      const files = fsReq.readdirSync(__dirname);
+      const catFiles = files.filter(f => f.startsWith('catalogo') && f.endsWith('.json'));
+      for (let f of catFiles) {
+        const filePath = pathReq.join(__dirname, f);
+        const data = JSON.parse(fsReq.readFileSync(filePath, 'utf8'));
+        database = database.concat(data);
+      }
+    } catch(e) {}
+  
+  // Se não houver banco, tenta usar o globalCache legado
+  if (database.length === 0 && globalCache.length > 0) {
+    database = globalCache;
+  }
+
+  let resultados = database;
+  
+  // Filtrar por Categoria igual na busca
+  if (c !== 'todas') {
+      const { lojas } = require('./scraper');
+      const flattenGroup = (group) => {
+        let arr = [];
+        for (let key in group) {
+          if (Array.isArray(group[key])) arr.push(...group[key]);
+          else if (typeof group[key] === 'object') arr = arr.concat(flattenGroup(group[key]));
+        }
+        return arr;
+      };
+      let dominiosValidos = [];
+      if (c.startsWith('esportes') || c === 'bolsas') {
+        dominiosValidos = flattenGroup(lojas.esportes);
+      } else if (c.startsWith('fitness')) {
+        dominiosValidos = flattenGroup(lojas); // Fitness scans all domains!
+      } else if (lojas[c]) {
+        dominiosValidos = flattenGroup(lojas[c]);
+      } else if (c.includes('_') && lojas[c.split('_')[0]]) {
+        dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
+      }
+      dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
+      resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
+            if (c === 'calcados_chuteiras') {
+         resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(chuteiraRegex));
+      } else if (c === 'calcados_casuais') {
+           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(chuteiraRegex));
+        }
+
+        // --- NEW: ESPORTES KEYWORD FILTERING ---
+        
+        
+        // --- GLOBAL ISOLATION FOR LUXO AND OUTROS ---
+        if (c.startsWith('luxo_') || c.startsWith('outros_')) {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              // Block Bags, Shoes, Fitness, and ALL Sports
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(globalSportsRegex);
+           });
+        }
+        
+        // --- NEW: ESPORTES OUTROS ---
+        if (c === 'esportes_outros') {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              // Must not match the major sports, bags, or fitness.
+              return !t.match(bagsRegex) && !t.match(chuteiraRegex) && !t.match(fitnessRegex) && !t.match(teamTrainingRegex) && !t.match(allOtherSports);
+           });
+        }
+
+        // --- NEW: BOLSAS CATEGORY ---
+        if (c === 'bolsas') {
+           resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(bagsRegex));
+        } else if (c !== 'todas') {
+           // Exclude bags from all other categories globally
+           resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(bagsRegex));
+        }
+
+        if (c.startsWith('esportes_')) {
+           const sub = c.replace('esportes_', '');
+           if (sportKeywords[sub]) {
+              resultados = resultados.filter(item => (item.titulo || '').toLowerCase().match(sportKeywords[sub]));
+           } else if (sub === 'futebol') {
+              // Exclude all other sports to keep football clean
+              resultados = resultados.filter(item => !(item.titulo || '').toLowerCase().match(allOtherSports));
+           }
+        }
+        // --- FITNESS CATEGORIES ---
+        if (c && c.startsWith('fitness')) {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              
+              // Base exclusion for all fitness
+              
+              // BLINDAGEM: Block domains that are strictly team sports so their generic 'Shorts' and 'Regatas' don't leak into Fitness
+              const blockedSportsDomains = ['chenzhefuzhuang', 'xingkong-sports', 'football-all', 'qiumishijie', '8618320710438', 'changjiangsports', 'dongshanstore', 'feitengsports', '007007haoyuntiyu', '1215795243', '3179704378', 'yiyisports2016'];
+              if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+
+              // Base exclusion
+              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
+                  return false;
+              }
+
+              if (c === 'fitness_compressao') {
+                  return t.match(/segunda pele|compress|紧身|速干|打底|pro|under armour/i);
+              }
+              if (c === 'fitness_corrida') {
+                  return t.match(/running|corrida|跑步|慢跑/i);
+              }
+              if (c === 'fitness_ciclismo') {
+                  return t.match(/ciclismo|cycling|骑行|自行车/i);
+              }
+              
+              return true; // c === 'fitness_geral' or just 'fitness'
+           });
+        }
+
+        // --- FITNESS CATEGORIES ---
+        if (c && c.startsWith('fitness')) {
+           resultados = resultados.filter(item => {
+              const t = (item.titulo || '').toLowerCase();
+              
+              // Base exclusion for all fitness
+              
+              // BLINDAGEM: Block domains that are strictly team sports so their generic 'Shorts' and 'Regatas' don't leak into Fitness
+              const blockedSportsDomains = ['chenzhefuzhuang', 'xingkong-sports', 'football-all', 'qiumishijie', '8618320710438', 'changjiangsports', 'dongshanstore', 'feitengsports', '007007haoyuntiyu', '1215795243', '3179704378', 'yiyisports2016'];
+              if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+
+              // Base exclusion
+              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
+                  return false;
+              }
+
+              if (c === 'fitness_compressao') {
+                  return t.match(/segunda pele|compress|紧身|速干|打底|pro|under armour/i);
+              }
+              if (c === 'fitness_corrida') {
+                  return t.match(/running|corrida|跑步|慢跑/i);
+              }
+              if (c === 'fitness_ciclismo') {
+                  return t.match(/ciclismo|cycling|骑行|自行车/i);
+              }
+              
+              return true; // c === 'fitness_geral' or just 'fitness'
+           });
+        }
+
+    }
+  
+  // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
+  
+    const page = parseInt(req.query.p) || 1;
+    const limit = 50;
+    const start = Math.max(0, resultados.length - (page * limit));
+    const end = resultados.length - ((page - 1) * limit);
+    const paginated = end > 0 ? resultados.slice(start, end).reverse() : [];
+    res.json(paginated.map(i => ({...i, original: i.titulo, titulo: traduzirTitulo(i.titulo)})));
+});
+

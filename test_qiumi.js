@@ -17,7 +17,9 @@ puppeteer.use(StealthPlugin());
                 req.continue();
             }
         });
-        await page.goto('https://407131796.x.yupoo.com/', {waitUntil: 'domcontentloaded', timeout: 30000});
+        await page.goto('https://qiumishijie.x.yupoo.com/', {waitUntil: 'networkidle2', timeout: 30000});
+        
+        await new Promise(r => setTimeout(r, 5000));
         
         const categories = await page.evaluate(() => {
             const links = document.querySelectorAll('a[href*="/categories/"]');
@@ -27,7 +29,9 @@ puppeteer.use(StealthPlugin());
             })).filter(c => c.name.length > 0 && /\d+/.test(c.href));
         });
         
-        console.log('Categories found:', categories);
+        console.log('Categories found:', categories.length);
+        if (categories.length > 0) console.log(categories.slice(0, 5));
+        
         await browser.close();
     } catch (e) {
         console.error(e);
