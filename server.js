@@ -241,7 +241,7 @@ app.get('/api/autocomplete', (req, res) => {
                   if (c === 'luxo_sneakers') {
                       return isSneaker;
                   } else if (c === 'luxo_banho') {
-                      return t.match(/swim|beach|sunga|bikini|biquini|biquíni|maiô|maio|泳衣|泳裤|比基尼|沙滩裤|沙滩|swimming|banho/i);
+                      return t.match(/swim|beach|sunga|bikini|biquini|biquíni|maiô|maio|泳|比基尼|沙滩|swimming|banho/i);
                   } else if (c === 'luxo_underwear') {
                       return t.match(/underwear|cueca|calcinha|lingerie|sutiã|sutia|boxer|brief|panties|\bbra\b|内衣|内裤|胸罩|文胸/i);
                   } else if (c === 'luxo_vestidos') {
@@ -249,7 +249,7 @@ app.get('/api/autocomplete', (req, res) => {
                   } else if (c === 'luxo_roupas') {
                       const isVestido = t.match(/dress|skirt|vestido|saia|裙|连衣裙|半身裙|长裙|短裙/i);
                       const isUnderwear = t.match(/underwear|cueca|calcinha|lingerie|sutiã|sutia|boxer|brief|panties|\bbra\b|内衣|内裤|胸罩|文胸/i);
-                      const isBanho = t.match(/swim|beach|sunga|bikini|biquini|biquíni|maiô|maio|泳衣|泳裤|比基尼|沙滩裤|沙滩|swimming|banho/i);
+                      const isBanho = t.match(/swim|beach|sunga|bikini|biquini|biquíni|maiô|maio|泳|比基尼|沙滩|swimming|banho/i);
                       return !isSneaker && !isVestido && !isUnderwear && !isBanho && !t.match(chuteiraRegex);
                   }
                   
@@ -418,6 +418,8 @@ app.get('/api/autocomplete', (req, res) => {
         q = q.replace(/coreia do sul/g, 'south_korea');
         q = q.replace(/estados unidos/g, 'united_states');
         q = q.replace(/reino unido/g, 'united_kingdom');
+        q = q.replace(/meia calça/g, 'meia_calça');
+        q = q.replace(/meia calca/g, 'meia_calça');
         
         const stopWords = ['de', 'do', 'da', 'dos', 'das', 'no', 'na', 'nos', 'nas', 'em', 'um', 'uma'];
         const keywords = q.split(' ').filter(k => k.length > 1 && !stopWords.includes(k));
@@ -471,6 +473,9 @@ app.get('/api/autocomplete', (req, res) => {
           'all_black': ['all_black'],
           'roupão': ['bathrobe', '浴袍'],
           'roupao': ['bathrobe', '浴袍'],
+          'meia_calça': ['tights', 'pantyhose', 'leggings', '连裤袜', '裤袜', '丝袜', 'meia-calça', 'meia-calca'],
+          'vestido': ['dress', '连衣裙', '裙子', '裙'],
+          'saia': ['skirt', '半身裙', '短裙', '长裙'],
           'south_africa': ['south_africa', '南非'],
           'new_zealand': ['new_zealand', 'zealand', '新西兰'],
           'costa_rica': ['costa_rica'],
