@@ -161,7 +161,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.67</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.68</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -593,7 +593,7 @@
         } else if (currentFilter === 'infantil') {
           filtered = dataset.filter(i => /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.titulo) || /kids|child|youth|童|infantil|menino|menina|boy|girl/i.test(i.original));
         } else if (currentFilter === 'feminino') {
-          filtered = dataset.filter(i => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.titulo) || /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original));
+          filtered = dataset.filter(i => /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.titulo) || /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.original) || (i.yupoo_category_name && /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(i.yupoo_category_name)));
         } else if (currentFilter === 'treino') {
             filtered = dataset.filter(i => /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(i.titulo) || /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(i.original));
           } else if (currentFilter === 'masculino') {
