@@ -1,6 +1,7 @@
 const express = require('express');
 
 
+const chineloRegex = /chinelo|slide|sand[áa]lia|pantufa|slipper|sandal|flip\s*flop|拖鞋|凉鞋/i;
 const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
 const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor|spike|astro|leg guard|shin guard|钉鞋|护腿板/i;
 const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤|pro\\b|combat|打底|dri-fit|segunda pele|compression|compressão|base layer/i;
@@ -195,7 +196,13 @@ app.get('/api/autocomplete', (req, res) => {
         dominiosValidos = flattenGroup(lojas[c.split('_')[0]]);
       }
       dominiosValidos = dominiosValidos.map(d => d.replace(/\/$/, ''));
-            resultados = resultados.filter(item => dominiosValidos.includes(item.domain));
+            resultados = resultados.filter(item => {
+               if (c === 'esportes_equipamentos') {
+                  const t = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
+                  if (t.match(/meia|meião|sock|袜|shin guard|leg guard|护腿|caneleira|gym sack|bolsa de esporte/i)) return true;
+               }
+               return dominiosValidos.includes(item.domain);
+            });
 
       // GLOBAL: Isolate Equipamentos
       if (c !== 'esportes_equipamentos') {
@@ -239,7 +246,7 @@ app.get('/api/autocomplete', (req, res) => {
                   const isSneaker = t.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
                   
                   if (c === 'luxo_sneakers') {
-                      return isSneaker;
+                      return isSneaker && !t.match(chineloRegex);
                   } else if (c === 'luxo_banho') {
                       return t.match(/swim|beach|sunga|bikini|biquini|biquíni|maiô|maio|泳|比基尼|沙滩|swimming|banho/i);
                   } else if (c === 'luxo_underwear') {
@@ -273,7 +280,11 @@ app.get('/api/autocomplete', (req, res) => {
 
         // --- NEW: BOLSAS CATEGORY ---
                 if (c === 'bolsas') {
-           resultados = resultados.filter(item => ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(bagsRegex) && !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(/包裹|kailas|vibram|徒步鞋|登山鞋|跑山|越野|跑鞋/)); } else if (c === 'social') {
+           resultados = resultados.filter(item => {
+              const t = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
+              return t.match(bagsRegex) && !t.match(/包裹|kailas|vibram|徒步鞋|登山鞋|跑山|越野|跑鞋/i) && !t.match(/meia|meião|sock|袜|shin guard|leg guard|护腿|caneleira|gym sack|bolsa de esporte/i);
+           });
+        } else if (c === 'social') {
            const dressShirts = /衬衫|social|dress shirt|camisa social|terno|alfaiataria|formal suit|business suit|西装|西服/i;
            resultados = resultados.filter(item => {
                const t = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
@@ -281,7 +292,7 @@ app.get('/api/autocomplete', (req, res) => {
                return t.match(dressShirts) && !t.match(bagsRegex) && !isSneaker;
            });
         } else if (c === 'bones') {
-           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽/i;
+           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽|cachecol|scarf|shawl|围巾|披肩/i;
            resultados = resultados.filter(item => {
                const orig = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
                const isSneaker = orig.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
@@ -305,7 +316,10 @@ app.get('/api/autocomplete', (req, res) => {
               // Exclude all other sports to keep football clean
               const luxuryBrands = /gucci|prada|louis vuitton|\blv\b|balenciaga|dior|burberry|versace|fendi|amiri|givenchy|chanel|hermes|rolex|古驰|普拉达|路易威登|巴黎世家|迪奥|博柏利|范思哲|芬迪/i;
               const dressShirts = /衬衫|social|dress shirt|camisa social|terno|alfaiataria|formal suit|business suit|西装|西服/i;
-              resultados = resultados.filter(item => !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(allOtherSports) && !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(luxuryBrands) && !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(dressShirts));
+              resultados = resultados.filter(item => {
+                  const t = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
+                  return !t.match(allOtherSports) && !t.match(luxuryBrands) && !t.match(dressShirts) && !t.match(chuteiraRegex);
+              });
            }
         }
         // --- FITNESS CATEGORIES ---
@@ -320,7 +334,8 @@ app.get('/api/autocomplete', (req, res) => {
               if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
 
               // Base exclusion
-              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
+              const jeansRegex = /jeans|denim|牛仔/i;
+              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex) || t.match(jeansRegex)) {
                   return false;
               }
 
@@ -350,7 +365,8 @@ app.get('/api/autocomplete', (req, res) => {
               if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
 
               // Base exclusion
-              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex)) {
+              const jeansRegex = /jeans|denim|牛仔/i;
+              if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex) || t.match(jeansRegex)) {
                   return false;
               }
 
@@ -585,7 +601,7 @@ app.get('/api/autocomplete', (req, res) => {
               resultados = resultados.filter(item => !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(chuteiraRegex));
            }
         } else if (c === 'bones') {
-           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽/i;
+           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽|cachecol|scarf|shawl|围巾|披肩/i;
            resultados = resultados.filter(item => {
                const orig = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
                const isSneaker = orig.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
@@ -618,7 +634,11 @@ app.get('/api/autocomplete', (req, res) => {
 
         // --- NEW: BOLSAS CATEGORY FOR SEARCH ---
                 if (c === 'bolsas') {
-           resultados = resultados.filter(item => ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(bagsRegex) && !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(/包裹|kailas|vibram|徒步鞋|登山鞋|跑山|越野|跑鞋/)); } else if (c === 'bones') {
+           resultados = resultados.filter(item => {
+              const t = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
+              return t.match(bagsRegex) && !t.match(/包裹|kailas|vibram|徒步鞋|登山鞋|跑山|越野|跑鞋/i) && !t.match(/meia|meião|sock|袜|shin guard|leg guard|护腿|caneleira|gym sack|bolsa de esporte/i);
+           });
+        } else if (c === 'bones') {
            const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽/i;
            resultados = resultados.filter(item => {
                const orig = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
@@ -638,7 +658,10 @@ app.get('/api/autocomplete', (req, res) => {
               // Exclude other sports
               const luxuryBrands = /gucci|prada|louis vuitton|\blv\b|balenciaga|dior|burberry|versace|fendi|amiri|givenchy|chanel|hermes|rolex|古驰|普拉达|路易威登|巴黎世家|迪奥|博柏利|范思哲|芬迪/i;
               const dressShirts = /衬衫|social|dress shirt|camisa social|terno|alfaiataria|formal suit|business suit|西装|西服/i;
-              resultados = resultados.filter(item => !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(allOtherSports) && !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(luxuryBrands) && !((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase().match(dressShirts));
+              resultados = resultados.filter(item => {
+                  const t = ((item.yupoo_category_name || '') + ' ' + (item.original || item.titulo || '')).toLowerCase();
+                  return !t.match(allOtherSports) && !t.match(luxuryBrands) && !t.match(dressShirts) && !t.match(chuteiraRegex);
+              });
            }
         }
 
