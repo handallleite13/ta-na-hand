@@ -1,6 +1,6 @@
 {
   "name": "yupoo-scraper-web",
-  "version": "0.69.0",
+  "version": "0.70.0",
   "description": "Yupoo Web Scraper",
   "main": "server.js",
   "scripts": {

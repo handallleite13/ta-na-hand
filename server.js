@@ -1,7 +1,7 @@
 const express = require('express');
 
 
-const chineloRegex = /chinelo|slide|sand[áa]lia|pantufa|slipper|sandal|flip\s*flop|拖鞋|凉鞋/i;
+const chineloRegex = /chinelo|slide|sand[áa]lia|pantufa|slipper|sandal|flip\s*flop|拖\s*鞋|凉鞋|沙滩|果冻鞋|洞洞鞋|croc/i;
 const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
 const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor|spike|astro|leg guard|shin guard|钉鞋|护腿板/i;
 const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤|pro\\b|combat|打底|dri-fit|segunda pele|compression|compressão|base layer/i;
@@ -246,6 +246,9 @@ app.get('/api/autocomplete', (req, res) => {
                   const isSneaker = t.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
                   
                   if (c === 'luxo_sneakers') {
+                      // 407131796 only sells sandals/chinelos, they have 0 sneakers in their catalog.
+                      // Their titles are often generic like "P105", so text filtering fails. Block domain entirely from sneakers.
+                      if (item.domain && item.domain.includes('407131796')) return false;
                       return isSneaker && !t.match(chineloRegex);
                   } else if (c === 'luxo_banho') {
                       return t.match(/swim|beach|sunga|bikini|biquini|biquíni|maiô|maio|泳|比基尼|沙滩|swimming|banho/i);
