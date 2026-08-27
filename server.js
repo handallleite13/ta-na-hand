@@ -337,7 +337,7 @@ app.get('/api/autocomplete', (req, res) => {
               if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
 
               // Base exclusion
-              const jeansRegex = /jeans|denim|牛仔/i;
+              const jeansRegex = /jeans|denim|\u725B\u4ED4/i;
               if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex) || t.match(jeansRegex)) {
                   return false;
               }
@@ -368,7 +368,7 @@ app.get('/api/autocomplete', (req, res) => {
               if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
 
               // Base exclusion
-              const jeansRegex = /jeans|denim|牛仔/i;
+              const jeansRegex = /jeans|denim|\u725B\u4ED4/i;
               if (!t.match(fitnessRegex) || t.match(teamTrainingRegex) || t.match(bagsRegex) || t.match(jeansRegex)) {
                   return false;
               }
