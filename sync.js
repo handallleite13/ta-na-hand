@@ -137,7 +137,7 @@ async function syncDomain(browser, dominio) {
           return Array.from(links).map(a => ({
               name: a.innerText.trim(),
               href: a.getAttribute('href')
-          })).filter(c => c.name.length > 0 && /\\d+/.test(c.href));
+          })).filter(c => c.name.length > 0 && /\d+/.test(c.href));
       });
       // Deduplicate by href
       const uniqueCats = [];
