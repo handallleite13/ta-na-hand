@@ -469,6 +469,8 @@ app.get('/api/autocomplete', (req, res) => {
           'inter': ['internacional', 'inter milan', 'internazionale'],
           'all_blacks': ['new_zealand', 'zealand', 'all_black'],
           'all_black': ['all_black'],
+          'roupão': ['bathrobe', '浴袍'],
+          'roupao': ['bathrobe', '浴袍'],
           'south_africa': ['south_africa', '南非'],
           'new_zealand': ['new_zealand', 'zealand', '新西兰'],
           'costa_rica': ['costa_rica'],
@@ -524,7 +526,13 @@ app.get('/api/autocomplete', (req, res) => {
           }
           
           return translatedKeywords.every(variants => {
-            return variants.some(v => titulo.includes(v.replace(/_/g, ' ')));
+            return variants.some(v => {
+              const term = v.replace(/_/g, ' ');
+              if (/^[a-z ]+$/i.test(term)) {
+                return new RegExp('\\b' + term + '\\b', 'i').test(titulo);
+              }
+              return titulo.includes(term);
+            });
           });
         });
     }
