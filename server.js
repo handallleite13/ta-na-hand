@@ -187,7 +187,7 @@ app.get('/api/autocomplete', (req, res) => {
         }
       } else if (c.startsWith('fitness')) {
         dominiosValidos = flattenGroup(lojas); // Fitness scans all domains!
-            } else if (c === 'luxo' || c.startsWith('luxo_') || c === 'social') {
+            } else if (c === 'luxo' || c.startsWith('luxo_') || c === 'social' || c === 'bones') {
         dominiosValidos = flattenGroup(lojas);
       } else if (lojas[c]) {
         dominiosValidos = flattenGroup(lojas[c]);
@@ -259,6 +259,13 @@ app.get('/api/autocomplete', (req, res) => {
                const t = (item.original || item.titulo || '').toLowerCase();
                const isSneaker = t.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
                return t.match(dressShirts) && !t.match(bagsRegex) && !isSneaker;
+           });
+        } else if (c === 'bones') {
+           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽/i;
+           resultados = resultados.filter(item => {
+               const orig = (item.original || item.titulo || '').toLowerCase();
+               const isSneaker = orig.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
+               return orig.match(hatsRegex) && !orig.match(bagsRegex) && !isSneaker;
            });
         } else if (c !== 'todas') {
            // Exclude bags from all other categories globally
@@ -544,6 +551,13 @@ app.get('/api/autocomplete', (req, res) => {
       } else if (c === 'calcados_casuais') {
               resultados = resultados.filter(item => !(item.original || item.titulo || '').toLowerCase().match(chuteiraRegex));
            }
+        } else if (c === 'bones') {
+           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽/i;
+           resultados = resultados.filter(item => {
+               const orig = (item.original || item.titulo || '').toLowerCase();
+               const isSneaker = orig.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
+               return orig.match(hatsRegex) && !orig.match(bagsRegex) && !isSneaker;
+           });
         } else if (c !== 'todas') {
            resultados = resultados.filter(item => {
               return !shoeDomains.some(sd => (item.domain || item.link || '').includes(sd));
@@ -571,7 +585,14 @@ app.get('/api/autocomplete', (req, res) => {
 
         // --- NEW: BOLSAS CATEGORY FOR SEARCH ---
                 if (c === 'bolsas') {
-           resultados = resultados.filter(item => (item.original || item.titulo || '').toLowerCase().match(bagsRegex) && !(item.original || item.titulo || '').toLowerCase().match(/包裹|kailas|vibram|徒步鞋|登山鞋|跑山|越野|跑鞋/)); } else if (c !== 'todas') {
+           resultados = resultados.filter(item => (item.original || item.titulo || '').toLowerCase().match(bagsRegex) && !(item.original || item.titulo || '').toLowerCase().match(/包裹|kailas|vibram|徒步鞋|登山鞋|跑山|越野|跑鞋/)); } else if (c === 'bones') {
+           const hatsRegex = /boné|\bbone\b|chapéu|chapeu|touca|gorro|viseira|\bcap\b|\bhat\b|beanie|snapback|bucket|帽子|棒球帽|毛线帽|渔夫帽/i;
+           resultados = resultados.filter(item => {
+               const orig = (item.original || item.titulo || '').toLowerCase();
+               const isSneaker = orig.match(/sneaker|shoe|tenis|tênis|dunk|jordan|force|skool|sapatilha|boot|鞋/i);
+               return orig.match(hatsRegex) && !orig.match(bagsRegex) && !isSneaker;
+           });
+        } else if (c !== 'todas') {
            resultados = resultados.filter(item => !(item.original || item.titulo || '').toLowerCase().match(bagsRegex));
         }
 
