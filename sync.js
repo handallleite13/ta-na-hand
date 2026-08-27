@@ -171,7 +171,7 @@ async function syncDomain(browser, dominio) {
         let jaExistentesNaSequencia = 0;
         
         for (let item of albuns) {
-          const existing = catalogo.find(i => i.link === item.link);
+          const existing = catalogo.find(i => i.link.split('&')[0] === item.link.split('&')[0]);
           if (!existing) {
             catalogo.push(item);
             novos++;
@@ -186,12 +186,10 @@ async function syncDomain(browser, dominio) {
           }
         }
         
-        if (novos > 0) saveDB();
+        saveDB(); // Salva sempre, pois estamos atualizando as tags de categorias dos itens existentes
         
         // Se encontramos 10 itens seguidos que já existiam, paramos de ler essa categoria para economizar tempo
-        if (jaExistentesNaSequencia >= 10 && !cat.href.includes('/categories?page=')) {
-            break;
-        }
+        // break removido para taguear tudo
         
         p++;
       }
