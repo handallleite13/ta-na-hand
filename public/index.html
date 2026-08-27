@@ -160,7 +160,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.59</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.60</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -347,8 +347,9 @@
     function updateCounts() {
       document.getElementById('fav-count').innerText = favorites.length;
       document.getElementById('fav-count-m').innerText = favorites.length;
-      document.getElementById('cart-count').innerText = cart.length;
-      document.getElementById('cart-count-m').innerText = cart.length;
+      const totalCart = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      document.getElementById('cart-count').innerText = totalCart;
+      document.getElementById('cart-count-m').innerText = totalCart;
     }
     updateCounts();
 
@@ -415,13 +416,19 @@
     };
 
     // Funções de Carrinho
-    window.addToCart = function(link) {
+    window.addToCart = function(link, event) {
       const item = allResults.find(a => a.link === link) || favorites.find(a => a.link === link);
       if (!item) return;
       
-      // Capturar o ID que é seguro para DOM
-      const domId = item.id || btoa(link).replace(/[^a-zA-Z0-9]/g, '');
-      const select = document.getElementById(`size-${domId}`);
+      let select = null;
+      if (event && event.target) {
+         const container = event.target.closest('.bg-slate-800');
+         if (container) select = container.querySelector('select');
+      }
+      if (!select) {
+         const domId = item.id || btoa(link).replace(/[^a-zA-Z0-9]/g, '');
+         select = document.getElementById(`size-${domId}`);
+      }
       const size = select ? select.value : '';
       
       if (!size) {
@@ -429,7 +436,12 @@
         return;
       }
       
-      cart.push({ ...item, size, cartId: Date.now().toString() });
+      const existingItem = cart.find(c => c.link === item.link && c.size === size);
+      if (existingItem) {
+          existingItem.quantity = (existingItem.quantity || 1) + 1;
+      } else {
+          cart.push({ ...item, size, quantity: 1, cartId: Date.now().toString() });
+      }
       localStorage.setItem('tnh_cart', JSON.stringify(cart));
       updateCounts();
       
@@ -440,6 +452,16 @@
       // Reset select feedback
       if(select) select.value = "";
       alert("✅ Adicionado ao carrinho!");
+    };
+
+    window.changeQty = function(cartId, delta) {
+      const item = cart.find(c => c.cartId === cartId);
+      if (!item) return;
+      item.quantity = (item.quantity || 1) + delta;
+      if (item.quantity < 1) item.quantity = 1;
+      localStorage.setItem('tnh_cart', JSON.stringify(cart));
+      renderCart();
+      updateCounts();
     };
 
     window.removeFromCart = function(cartId) {
@@ -470,6 +492,11 @@
             <div class="flex-1 min-w-0">
               <h4 class="font-bold text-white text-sm sm:text-base leading-tight truncate mb-1" title="${item.titulo}">${item.titulo}</h4>
               <p class="text-indigo-400 font-semibold text-sm mb-2">Tamanho: <span class="bg-indigo-600/20 px-2 py-0.5 rounded text-indigo-300">${item.size}</span></p>
+              <div class="flex items-center gap-3 mb-2">
+                <button onclick="changeQty('${item.cartId}', -1)" class="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-bold flex items-center justify-center transition-colors">-</button>
+                <span class="text-white font-bold text-sm w-6 text-center">${item.quantity || 1}</span>
+                <button onclick="changeQty('${item.cartId}', 1)" class="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-bold flex items-center justify-center transition-colors">+</button>
+              </div>
               <div class="flex gap-2">
                 <a href="${item.link}" target="_blank" class="text-xs text-slate-400 hover:text-white underline">Ver Catálogo</a>
               </div>
@@ -497,7 +524,9 @@
       let text = "Olá, gostaria de encomendar os seguintes itens:\n\n";
       
       cart.forEach((item, idx) => {
-        text += `${idx + 1}) Link: ${item.link}\n`;
+        const qty = item.quantity || 1;
+        const qtyText = qty > 1 ? `${qty}x ` : '';
+        text += `${idx + 1}) ${qtyText}Link: ${item.link}\n`;
         text += `Tamanho: ${sizeMap[item.size] || item.size}\n\n`;
       });
 
@@ -561,7 +590,7 @@
                 <option value="GG">GG</option>
               </select>
               
-              <button onclick="addToCart('${item.link}')" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg transition-colors text-xs flex items-center justify-center gap-1 shadow-sm">
+              <button onclick="addToCart('${item.link}', event)" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg transition-colors text-xs flex items-center justify-center gap-1 shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 Pôr no Carrinho
               </button>
