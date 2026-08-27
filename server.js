@@ -4,7 +4,7 @@ const express = require('express');
 const chineloRegex = /chinelo|slide|sand[áa]lia|pantufa|slipper|sandal|flip\s*flop|拖\s*鞋|凉鞋|沙滩|果冻鞋|洞洞鞋|croc/i;
 const bagsRegex = /bag|backpack|\\bbolsa\\b|\\bmochila\\b|\\bmala\\b|双肩包|单肩包|手提包|旅行包|腰包|斜挎包|书包|胸包|背包/i;
 const chuteiraRegex = /fg|tf|ag|sg|mg|ic|in|cleat|chuteira|足球鞋|橄榄球鞋|football|mercurial|predator|f50|phantom|tiempo|copa|future|superfly|vapor|spike|astro|leg guard|shin guard|钉鞋|护腿板/i;
-const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|健身|瑜伽|紧身|速干|running|jogger|sweatpants|legging|training|卫衣|卫裤|外套|休闲|运动|套装|圆领|背心|夹克|长裤|短裤|pro\\b|combat|打底|dri-fit|segunda pele|compression|compressão|base layer/i;
+const fitnessRegex = /yoga|lululemon|gymshark|alo yoga|nike pro|under armour|fitness|\u5065\u8EAB|\u745C\u4F3D|\u7D27\u8EAB|\u901F\u5E72|running|jogger|sweatpants|legging|training|pro\\b|combat|\u6253\u5E95|dri-fit|segunda pele|compression|compressão|base layer/i;
 
 
 const sportKeywords = {
