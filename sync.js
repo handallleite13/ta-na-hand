@@ -129,6 +129,9 @@ async function syncDomain(browser, dominio) {
   
   try {
       await page.goto(dominio, {waitUntil: 'domcontentloaded', timeout: 30000});
+      try { await page.waitForSelector('a[href*="/categories/"]', {timeout: 10000}); } catch(e) {}
+      await new Promise(r => setTimeout(r, 2000)); // Garantir tempo pro Vue.js renderizar
+
       const foundCategories = await page.evaluate(() => {
           const links = document.querySelectorAll('a[href*="/categories/"]');
           return Array.from(links).map(a => ({
