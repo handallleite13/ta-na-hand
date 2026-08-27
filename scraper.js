@@ -5,6 +5,9 @@ const fs = require('fs');
 
 const lojas = {
   esportes: {
+    equipamentos: [
+      "https://pp111115555.x.yupoo.com"
+    ],
     futebol: [
       "http://007007haoyuntiyu.x.yupoo.com",
       "https://aodong888.x.yupoo.com",
@@ -71,7 +74,6 @@ const lojas = {
       "https://ax6789.x.yupoo.com",
       "https://huandong123.x.yupoo.com",
       "https://huang456852.x.yupoo.com",
-      "https://pp111115555.x.yupoo.com",
       "https://sf0594888.x.yupoo.com",
       "https://ting8899.x.yupoo.com",
       "https://ty-guoji2.x.yupoo.com"
