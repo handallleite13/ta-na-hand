@@ -161,7 +161,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.74</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.75</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -735,7 +735,7 @@
       document.getElementById('bottom-status').classList.add('hidden');
 
       try {
-        const res = await fetch(`/api/latest?c=${encodeURIComponent(category)}&p=${currentPage}`);
+        const res = await fetch(`/api/latest?c=${encodeURIComponent(category)}&p=${currentPage}&f=${currentFilter || 'all'}`);
         const data = await res.json();
         document.getElementById('search-spinner').classList.add('hidden');
         
@@ -790,7 +790,7 @@
       }
 
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&c=${category}&p=${currentPage}`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&c=${category}&p=${currentPage}&f=${currentFilter || 'all'}`);
         const data = await res.json();
         
         if (data.length < 50) hasMore = false;

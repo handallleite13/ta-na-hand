@@ -389,6 +389,33 @@ app.get('/api/autocomplete', (req, res) => {
 
     }
   
+  
+    // SMART FILTERS LOGIC (f)
+    const f = req.query.f || 'all';
+    if (f !== 'all') {
+        resultados = resultados.filter(i => {
+             const str = ((i.yupoo_category_name || '') + ' ' + (i.original || '') + ' ' + (i.titulo || '')).toLowerCase();
+             
+             if (f === 'infantil') {
+                 return /kids|child|youth|童|infantil|menino|menina|boy\b|girl\b/i.test(str);
+             } else if (f === 'feminino') {
+                 return /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(str);
+             } else if (f === 'masculino') {
+                 const isFeminino = /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(str);
+                 const isInfantil = /kids|child|youth|童|infantil|menino|menina|boy\b|girl\b/i.test(str);
+                 const isMasculinoExplicit = /man\b|men\b|male|男|masculino|masculina|mens|homem/i.test(str);
+                 return isMasculinoExplicit || (!isFeminino && !isInfantil);
+             } else if (f === 'player') {
+                 return /jogador|player|球员|adv/i.test(str);
+             } else if (f === 'fan') {
+                 return /torcedor|fan|球迷/i.test(str);
+             } else if (f === 'treino') {
+                 return /training|tracksuit|survetement|chandal|tuta|训练|套装|出场服/i.test(str);
+             }
+             return true;
+        });
+    }
+
   // Pega os 50 mais recentes (assumindo que o banco guarda na ordem, ou vamos embaralhar/pegar últimos)
   
     const page = parseInt(req.query.p) || 1;
