@@ -161,7 +161,7 @@
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
         </span>
-        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.76</span>
+        <span class="text-xs font-bold text-slate-300 tracking-wider">BUILD v0.77</span>
       </div>
       <p class="text-xs text-slate-600 max-w-md">Plataforma em desenvolvimento. Rumo à versão 1.0 (Profissional e Escalável).</p>
     </div>
@@ -532,7 +532,13 @@
         e.target.classList.add('bg-indigo-600', 'text-white');
         
         currentFilter = e.target.getAttribute('data-filter');
-        applyFiltersAndRender(showingFavorites ? favorites : allResults, false);
+        if (showingFavorites) {
+            applyFiltersAndRender(favorites, false);
+        } else if (currentEndpoint === 'search') {
+            executeSearch();
+        } else {
+            fetchLatestAndRender();
+        }
       });
     });
 
