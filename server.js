@@ -334,7 +334,14 @@ app.get('/api/autocomplete', (req, res) => {
               
               // BLINDAGEM: Block domains that are strictly team sports so their generic 'Shorts' and 'Regatas' don't leak into Fitness
               const blockedSportsDomains = ['chenzhefuzhuang', 'xingkong-sports', 'football-all', 'qiumishijie', '8618320710438', 'changjiangsports', 'dongshanstore', 'feitengsports', '007007haoyuntiyu', '1215795243', '3179704378', 'yiyisports2016'];
-              if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+                if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+                
+                // BLINDAGEM: Block shoe domains and shoe keywords so sneakers don't leak into fitness just because they have 'running' in the title
+                const shoeDomains = ['gaoduan001', 'yehecheng', 'ywq2000', 'dachang88'];
+                if (item.domain && shoeDomains.some(d => item.domain.includes(d))) return false;
+                
+                const shoeKeywordsRegex = /\u978B|sneaker|shoes|\bshoe\b|tênis|tenis|chuteira|boot|sandal|slipper|chinelo|slide|running shoe|speedcat|p-6000|cloudultra|hoka|asics|new balance|puma|vans|converse|crocs|yeezy|air force|dunk|jordan/i;
+                if (t.match(shoeKeywordsRegex)) return false;
 
               // Base exclusion
               const jeansRegex = /jeans|denim|\u725B\u4ED4/i;
@@ -365,7 +372,14 @@ app.get('/api/autocomplete', (req, res) => {
               
               // BLINDAGEM: Block domains that are strictly team sports so their generic 'Shorts' and 'Regatas' don't leak into Fitness
               const blockedSportsDomains = ['chenzhefuzhuang', 'xingkong-sports', 'football-all', 'qiumishijie', '8618320710438', 'changjiangsports', 'dongshanstore', 'feitengsports', '007007haoyuntiyu', '1215795243', '3179704378', 'yiyisports2016'];
-              if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+                if (item.domain && blockedSportsDomains.some(d => item.domain.includes(d))) return false;
+                
+                // BLINDAGEM: Block shoe domains and shoe keywords so sneakers don't leak into fitness just because they have 'running' in the title
+                const shoeDomains = ['gaoduan001', 'yehecheng', 'ywq2000', 'dachang88'];
+                if (item.domain && shoeDomains.some(d => item.domain.includes(d))) return false;
+                
+                const shoeKeywordsRegex = /\u978B|sneaker|shoes|\bshoe\b|tênis|tenis|chuteira|boot|sandal|slipper|chinelo|slide|running shoe|speedcat|p-6000|cloudultra|hoka|asics|new balance|puma|vans|converse|crocs|yeezy|air force|dunk|jordan/i;
+                if (t.match(shoeKeywordsRegex)) return false;
 
               // Base exclusion
               const jeansRegex = /jeans|denim|\u725B\u4ED4/i;
