@@ -399,9 +399,9 @@ app.get('/api/autocomplete', (req, res) => {
              if (f === 'infantil') {
                  return /kids|child|youth|童|infantil|menino|menina|boy\b|girl\b/i.test(str);
              } else if (f === 'feminino') {
-                 return /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(str);
+                 return /women|woman|female|lady|ladies|\u5973|feminino|feminina|mulher|yoga|\u745C\u73C8|\u745C\u4F3D|legging|bikini|biquini|sutiã|bra\b|maio|maiô/i.test(str);
              } else if (f === 'masculino') {
-                 const isFeminino = /women|woman|female|lady|ladies|女|feminino|feminina|mulher/i.test(str);
+                 const isFeminino = /women|woman|female|lady|ladies|\u5973|feminino|feminina|mulher|yoga|\u745C\u73C8|\u745C\u4F3D|legging|bikini|biquini|sutiã|bra\b|maio|maiô/i.test(str);
                  const isInfantil = /kids|child|youth|童|infantil|menino|menina|boy\b|girl\b/i.test(str);
                  const isMasculinoExplicit = /man\b|men\b|male|男|masculino|masculina|mens|homem/i.test(str);
                  return isMasculinoExplicit || (!isFeminino && !isInfantil);
